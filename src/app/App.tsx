@@ -247,8 +247,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      {/* Mobile Container */}
-      <div className="w-full max-w-md h-[90vh] border-8 border-black bg-white shadow-2xl flex flex-col relative overflow-hidden">
+      {/* Mobile Container for small screens, full-width for large screens */}
+      <div className="w-full max-w-md lg:max-w-none lg:w-full h-[90vh] border-8 border-black bg-white shadow-2xl flex flex-col relative overflow-hidden">
         {/* Character Sheet Background Watermark */}
         <div 
           className="absolute inset-0 opacity-5 bg-cover bg-center pointer-events-none"
@@ -256,8 +256,8 @@ function App() {
 
         {!showShop && (
           <>
-            {/* View Indicator */}
-            <div className="flex border-b-2 border-black relative z-10">
+            {/* View Indicator - hidden on large screens */}
+            <div className="flex border-b-2 border-black relative z-10 lg:hidden">
               <button
                 onClick={() => setCurrentView('attributes')}
                 className={`flex-1 py-3 text-sm font-black uppercase ${
@@ -284,19 +284,23 @@ function App() {
               </button>
             </div>
 
-            {/* Main Content Area */}
-            <div {...handlers} className="flex-1 overflow-hidden relative">
+            {/* Main Content Area - swipeable on mobile, side-by-side on large screens */}
+            <div {...handlers} className="flex-1 overflow-hidden relative lg:overflow-visible">
+              {/* Mobile: sliding carousel layout, Desktop: side-by-side */}
               <div
-                className="flex h-full transition-transform duration-300 ease-out"
+                className="flex h-full transition-transform duration-300 ease-out lg:transition-none lg:!transform-none"
                 style={{
-                  transform: 
+                  transform: window.innerWidth >= 1024 ? 'translateX(0)' :
                     currentView === 'attributes' ? 'translateX(0)' :
                     currentView === 'player' ? 'translateX(-100%)' :
                     'translateX(-200%)'
                 }}
               >
                 {/* Character Attributes View */}
-                <div className="w-full flex-shrink-0 p-4 overflow-auto">
+                <div className="w-full flex-shrink-0 p-4 overflow-auto lg:w-1/3 lg:border-r-2 lg:border-black">
+                  <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
+                    Character Info
+                  </h2>
                   <CharacterAttributesView
                     attributes={characterAttributes}
                     abilities={abilities}
@@ -310,7 +314,10 @@ function App() {
                 </div>
 
                 {/* Player View */}
-                <div className="w-full flex-shrink-0 p-4 overflow-auto">
+                <div className="w-full flex-shrink-0 p-4 overflow-auto lg:w-1/3 lg:border-r-2 lg:border-black">
+                  <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
+                    Character Sheet
+                  </h2>
                   <PlayerView
                     hp={hp}
                     maxHp={maxHp}
@@ -323,7 +330,10 @@ function App() {
                 </div>
 
                 {/* Inventory View */}
-                <div className="w-full flex-shrink-0 p-4 overflow-auto">
+                <div className="w-full flex-shrink-0 p-4 overflow-auto lg:w-1/3">
+                  <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
+                    Inventory
+                  </h2>
                   <InventoryView
                     items={inventory}
                     onToggleEquipped={handleToggleEquipped}
