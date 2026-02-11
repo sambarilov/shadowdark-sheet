@@ -77,7 +77,8 @@ function App() {
       damage: '1d8',
       equipped: true,
       description: 'A versatile blade',
-      value: { gold: 15, silver: 0, copper: 0 }
+      value: { gold: 15, silver: 0, copper: 0 },
+      slots: 1
     },
     {
       id: '2',
@@ -87,7 +88,8 @@ function App() {
       damage: '1d4',
       equipped: false,
       description: 'Small and quick',
-      value: { gold: 2, silver: 0, copper: 0 }
+      value: { gold: 2, silver: 0, copper: 0 },
+      slots: 1
     },
     {
       id: '3',
@@ -96,7 +98,8 @@ function App() {
       armorAC: 12,
       equipped: true,
       description: 'Light protection',
-      value: { gold: 5, silver: 0, copper: 0 }
+      value: { gold: 5, silver: 0, copper: 0 },
+      slots: 1
     },
     {
       id: '4',
@@ -105,7 +108,8 @@ function App() {
       shieldACBonus: 1,
       equipped: false,
       description: 'Wooden shield',
-      value: { gold: 10, silver: 0, copper: 0 }
+      value: { gold: 10, silver: 0, copper: 0 },
+      slots: 1
     },
     {
       id: '5',
@@ -114,7 +118,8 @@ function App() {
       uses: 1,
       equipped: false,
       description: 'Restores 2d6 HP',
-      value: { gold: 50, silver: 0, copper: 0 }
+      value: { gold: 50, silver: 0, copper: 0 },
+      slots: 1
     },
     {
       id: '6',
@@ -122,7 +127,8 @@ function App() {
       type: 'gear',
       equipped: false,
       description: 'Provides light for 1 hour',
-      value: { gold: 0, silver: 1, copper: 0 }
+      value: { gold: 0, silver: 1, copper: 0 },
+      slots: 1
     },
     {
       id: '7',
@@ -130,7 +136,8 @@ function App() {
       type: 'gear',
       equipped: false,
       description: 'Sturdy hemp rope',
-      value: { gold: 1, silver: 0, copper: 0 }
+      value: { gold: 1, silver: 0, copper: 0 },
+      slots: 1
     }
   ]);
 
@@ -259,13 +266,14 @@ function App() {
             name: item.name || 'Unknown Item',
             type: item.type === 'weapon' ? 'weapon' : 'gear',
             equipped: false,
-            description: `${item.quantity || 1}x ${item.slots || 0} slots`,
+            description: `${item.quantity || 1}x`,
             value: { 
               gold: item.currency === 'gp' ? item.cost : 0,
               silver: item.currency === 'sp' ? item.cost : 0,
               copper: item.currency === 'cp' ? item.cost : 0
             },
-            damage: item.type === 'weapon' ? '1d4' : undefined
+            damage: item.type === 'weapon' ? '1d4' : undefined,
+            slots: item.slots || 1
           }));
           setInventory(newInventory);
         }
@@ -378,7 +386,8 @@ function App() {
         damage: shopItem.damage,
         equipped: false,
         description: shopItem.description,
-        value: shopItem.price
+        value: shopItem.price,
+        slots: 1
       };
 
       setInventory((items: ItemData[]) => [...items, newItem]);
@@ -554,6 +563,7 @@ function App() {
                     onOpenShop={() => setShowShop(true)}
                     onAddItem={handleAddItem}
                     onRemoveItem={handleRemoveItem}
+                    strScore={abilities.find(a => a.shortName === 'STR')?.score || 10}
                     coins={coins}
                   />
                 </div>

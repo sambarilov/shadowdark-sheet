@@ -10,6 +10,7 @@ interface InventoryViewProps {
   onOpenShop: () => void;
   onAddItem: (item: ItemData) => void;
   onRemoveItem: (id: string) => void;
+  strScore: number;
   coins: {
     gold: number;
     silver: number;
@@ -17,7 +18,7 @@ interface InventoryViewProps {
   };
 }
 
-export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onRemoveItem, coins }: InventoryViewProps) {
+export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onRemoveItem, strScore, coins }: InventoryViewProps) {
   const [showItemDialog, setShowItemDialog] = useState(false);
 
   const weaponsAndArmor = items.filter(item => 
@@ -26,6 +27,9 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
   const otherItems = items.filter(item => 
     item.type === 'consumable' || item.type === 'gear' || item.type === 'treasure'
   );
+
+  const totalSlots = Math.max(strScore, 10);
+  const usedSlots = items.reduce((sum, item) => sum + (item.slots || 0), 0);
 
   const formatItemDetails = (item: ItemData) => {
     const details = [];
@@ -39,50 +43,59 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-2 mb-4">
-        <Package size={24} />
-        <h2 className="text-2xl font-black uppercase">Inventory</h2>
+      {/* Header with Title and Action Buttons */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Package size={24} />
+          <h2 className="text-2xl font-black uppercase">Inventory</h2>
+          <span className={`text-sm font-black px-2 py-1 border-2 border-black ${
+            usedSlots > totalSlots ? 'bg-red-500 text-white' : 'bg-white'
+          }`}>
+            {usedSlots}/{totalSlots}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-2 border-black p-2 h-9 w-9"
+            onClick={() => setShowItemDialog(true)}
+          >
+            <Plus size={18} />
+          </Button>
+          <Button
+            size="sm"
+            className="bg-black text-white hover:bg-gray-800 border-2 border-black p-2 h-9 w-9"
+            onClick={onOpenShop}
+          >
+            <ShoppingBag size={18} />
+          </Button>
+        </div>
       </div>
 
       {/* Coins Section */}
-      <div className="mb-4 border-4 border-black p-3 bg-white">
-        <div className="flex items-center gap-2 mb-2">
-          <Coins size={20} />
-          <h3 className="text-lg font-black uppercase">Coins</h3>
+      <div className="mb-4 border-2 border-black p-2 bg-white">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Coins size={18} />
+            <span className="text-sm font-black uppercase">Coins</span>
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="text-xs uppercase text-gray-600">Gold</div>
-            <div className="text-xl font-black">{coins.gold}</div>
+            <div className="text-lg font-black">{coins.gold}</div>
           </div>
           <div>
             <div className="text-xs uppercase text-gray-600">Silver</div>
-            <div className="text-xl font-black">{coins.silver}</div>
+            <div className="text-lg font-black">{coins.silver}</div>
           </div>
           <div>
             <div className="text-xs uppercase text-gray-600">Copper</div>
-            <div className="text-xl font-black">{coins.copper}</div>
+            <div className="text-lg font-black">{coins.copper}</div>
           </div>
         </div>
       </div>
-
-      {/* Shop Button */}
-      <Button
-        className="w-full mb-4 bg-black text-white hover:bg-gray-800 border-2 border-black h-12"
-        onClick={onOpenShop}
-      >
-        <ShoppingBag size={20} className="mr-2" />
-        <span className="font-black uppercase">Visit Shop</span>
-      </Button>
-
-      {/* Add Item Button */}
-      <Button
-        className="w-full mb-4 bg-white text-black hover:bg-gray-100 border-2 border-black h-12"
-        onClick={() => setShowItemDialog(true)}
-      >
-        <Plus size={20} className="mr-2" />
-        <span className="font-black uppercase">Add Item</span>
-      </Button>
 
       {/* Equipment Section */}
       <div className="mb-6">
@@ -100,7 +113,14 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex-1">
-                    <div className="font-black">{item.name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-black">{item.name}</span>
+                      {item.slots !== undefined && item.slots > 0 && (
+                        <span className="text-xs bg-gray-800 text-white px-2 py-0.5 rounded">
+                          {item.slots} slot{item.slots !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
                     <div className={`text-sm ${item.equipped ? 'text-gray-300' : 'text-gray-600'}`}>
                       {formatItemDetails(item)}
                     </div>
@@ -147,7 +167,14 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
               <div key={item.id} className="border-2 border-black p-3 bg-white group">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="font-black">{item.name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-black">{item.name}</span>
+                      {item.slots !== undefined && item.slots > 0 && (
+                        <span className="text-xs bg-gray-800 text-white px-2 py-0.5 rounded">
+                          {item.slots} slot{item.slots !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
                     {formatItemDetails(item) && (
                       <div className="text-sm text-gray-600">{formatItemDetails(item)}</div>
                     )}

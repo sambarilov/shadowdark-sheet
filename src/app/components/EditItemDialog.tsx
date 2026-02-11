@@ -19,6 +19,7 @@ export interface ItemData {
     silver: number;
     copper: number;
   };
+  slots?: number;
   // Weapon specific
   weaponAbility?: string;
   damage?: string;
@@ -44,6 +45,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
   const [gold, setGold] = useState(item?.value.gold || 0);
   const [silver, setSilver] = useState(item?.value.silver || 0);
   const [copper, setCopper] = useState(item?.value.copper || 0);
+  const [slots, setSlots] = useState(item?.slots || 1);
   
   // Weapon fields
   const [weaponAbility, setWeaponAbility] = useState(item?.weaponAbility || 'STR');
@@ -66,7 +68,8 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         type,
         description: description.trim(),
         equipped: item?.equipped || false,
-        value: { gold, silver, copper }
+        value: { gold, silver, copper },
+        slots
       };
 
       if (type === 'weapon') {
@@ -138,7 +141,19 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
               placeholder="Item description"
             />
           </div>
+<div>
+            <Label className="font-black">Slots</Label>
+            <Input
+              type="number"
+              value={slots}
+              onChange={(e) => setSlots(parseInt(e.target.value) || 0)}
+              className="border-2 border-black mt-1"
+              min={0}
+              placeholder="0"
+            />
+          </div>
 
+          
           {/* Type-specific fields */}
           {type === 'weapon' && (
             <>
