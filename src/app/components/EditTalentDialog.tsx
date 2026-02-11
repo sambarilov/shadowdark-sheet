@@ -1,0 +1,74 @@
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import type { Talent } from './CharacterAttributesView';
+
+interface EditTalentDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (talent: Talent) => void;
+  talent?: Talent;
+}
+
+export function EditTalentDialog({ open, onClose, onSave, talent }: EditTalentDialogProps) {
+  const [name, setName] = useState(talent?.name || '');
+  const [description, setDescription] = useState(talent?.description || '');
+
+  const handleSave = () => {
+    if (name.trim() && description.trim()) {
+      onSave({
+        id: talent?.id || `talent-${Date.now()}`,
+        name: name.trim(),
+        description: description.trim()
+      });
+      onClose();
+      if (!talent) {
+        setName('');
+        setDescription('');
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md border-4 border-black bg-white">
+        <DialogHeader>
+          <DialogTitle className="font-black uppercase">
+            {talent ? 'Edit Talent' : 'Add Talent'}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label className="font-black">Name</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border-2 border-black mt-1"
+              placeholder="Talent name"
+            />
+          </div>
+          <div>
+            <Label className="font-black">Description</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="border-2 border-black mt-1 min-h-24"
+              placeholder="Talent description"
+            />
+          </div>
+        </div>
+        <DialogFooter className="mt-4">
+          <Button onClick={onClose} variant="outline" className="border-2 border-black">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} className="bg-black text-white border-2 border-black">
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
