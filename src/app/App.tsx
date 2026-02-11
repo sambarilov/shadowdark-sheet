@@ -6,6 +6,8 @@ import { CharacterAttributesView, type CharacterAttribute, type Talent, type Abi
 import { ShopView, type ShopItem } from './components/ShopView';
 import { Upload } from 'lucide-react';
 import { Button } from './components/ui/button';
+import { Toaster } from './components/ui/sonner';
+import { toast } from 'sonner';
 import spellsData from '../../assets/json/spells.json';
 
 interface SpellData {
@@ -340,6 +342,14 @@ function App() {
     setTalents((talents: Talent[]) => talents.filter((talent: Talent) => talent.id !== id));
   };
 
+  const formatPrice = (price: { gold: number; silver: number; copper: number }) => {
+    const parts = [];
+    if (price.gold > 0) parts.push(`${price.gold}g`);
+    if (price.silver > 0) parts.push(`${price.silver}s`);
+    if (price.copper > 0) parts.push(`${price.copper}c`);
+    return parts.join(' ');
+  };
+
   const handleBuyItem = (shopItem: ShopItem) => {
     // Calculate total cost in copper (1 gold = 10 silver, 1 silver = 10 copper)
     const itemCostInCopper = (shopItem.price.gold * 100) + (shopItem.price.silver * 10) + shopItem.price.copper;
@@ -372,8 +382,13 @@ function App() {
       };
 
       setInventory((items: ItemData[]) => [...items, newItem]);
+      toast.success(`Purchased ${shopItem.name}!`, {
+        description: `Spent ${formatPrice(shopItem.price)}`
+      });
     } else {
-      alert('Not enough coins!');
+      toast.error('Not enough coins!', {
+        description: 'You need more gold to buy this item.'
+      });
     }
   };
 
@@ -393,6 +408,10 @@ function App() {
 
     // Remove from inventory
     setInventory((items: ItemData[]) => items.filter((i: ItemData) => i.id !== item.id));
+    
+    toast.success(`Sold ${item.name}!`, {
+      description: `Received ${formatPrice(halfValue)}`
+    });
   };
 
   const handlers = useSwipeable({
@@ -421,9 +440,9 @@ function App() {
     }));
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-start justify-center">
       {/* Mobile Container for small screens, full-width for large screens */}
-      <div className="w-full max-w-md lg:max-w-none lg:w-full h-[90vh] border-8 border-black bg-white shadow-2xl flex flex-col relative overflow-hidden">
+      <div className="w-full max-w-md lg:max-w-none lg:w-full h-[100vh] border-8 border-black bg-white shadow-2xl flex flex-col relative overflow-hidden">
         {/* Character Sheet Background Watermark */}
         <div 
           className="absolute inset-0 opacity-5 bg-cover bg-center pointer-events-none"
@@ -556,10 +575,10 @@ function App() {
         )}
 
         {/* Footer */}
-        <div className="border-t-4 border-black p-2 bg-black text-white text-center text-xs relative z-10">
-          <p>© 2023 The Arcane Library, LLC</p>
+        <div className="bg-black text-white text-center text-xs relative z-10">
         </div>
       </div>
+      <Toaster richColors position="top-center" />
     </div>
   );
 }
