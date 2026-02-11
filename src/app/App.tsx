@@ -1,11 +1,32 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { PlayerView } from './components/PlayerView';
 import { InventoryView, type ItemData } from './components/InventoryView';
 import { CharacterAttributesView, type CharacterAttribute, type Talent, type Ability } from './components/CharacterAttributesView';
 import { ShopView, type ShopItem } from './components/ShopView';
+import { Upload } from 'lucide-react';
+import { Button } from './components/ui/button';
+import spellsData from '../../assets/json/spells.json';
+
+interface SpellData {
+  source: string;
+  name: string;
+  tier: number;
+  spellType: string;
+  duration: string;
+  range: string;
+  description: string;
+}
+
+interface Spell {
+  id: string;
+  name: string;
+  level: number;
+  description: string;
+}
 
 function App() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('player');
   const [showShop, setShowShop] = useState(false);
   const [luckTokenUsed, setLuckTokenUsed] = useState(false);
@@ -111,7 +132,7 @@ function App() {
     }
   ]);
 
-  const spells = [
+  const [spells, setSpells] = useState<Spell[]>([
     {
       id: '1',
       name: 'Magic Missile',
@@ -130,16 +151,170 @@ function App() {
       level: 3,
       description: '6d6 fire damage in 20-foot radius'
     }
-  ];
+  ]);
 
-  const characterAttributes: CharacterAttribute[] = [
+  const [characterAttributes, setCharacterAttributes] = useState<CharacterAttribute[]>([
     { name: 'Name', value: 'Aldric the Wizard' },
     { name: 'Ancestry', value: 'Human' },
     { name: 'Class', value: 'Wizard' },
     { name: 'Level', value: '3' },
     { name: 'Background', value: 'Scholar' },
     { name: 'Alignment', value: 'Lawful Good' }
-  ];
+  ]);
+
+  const importCharacter = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        
+        // Map character attributes
+        setCharacterAttributes([
+          { name: 'Name', value: json.name || 'Unknown' },
+          { name: 'Ancestry', value: json.ancestry || 'Unknown' },
+          { name: 'Class', value: json.class || 'Unknown' },
+          { name: 'Level', value: json.level?.toString() || '1' },
+          { name: 'Background', value: json.background || 'Unknown' },
+          { name: 'Alignment', value: json.alignment || 'Neutral' }
+        ]);
+
+        // Map abilities/stats
+        const statMap: Record<string, string> = {
+          'STR': 'Strength',
+          'DEX': 'Dexterity',
+          'CON': 'Constitution',
+          'INT': 'Intelligence',
+          'WIS': 'Wisdom',
+          'CHA': 'Charisma'
+        };
+        
+        if (json.stats) {
+          const newAbilities: Ability[] = Object.entries(json.stats).map(([key, value]) => {
+            const score = value as number;
+            const bonus = Math.floor((score - 10) / 2);
+            return {
+              name: statMap[key] || key,
+              shortName: key,
+              score,
+              bonus
+            };
+          });
+          setAbilities(newAbilities);
+        }
+
+        // Map HP
+        if (json.maxHitPoints) {
+          setMaxHp(json.maxHitPoints);
+          setHp(json.maxHitPoints); // Start at max
+        }
+
+        // Map coins
+        setCoins({
+          gold: json.gold || 0,
+          silver: json.silver || 0,
+          copper: json.copper || 0
+        });
+
+        // Map talents from bonuses
+        if (json.bonuses && Array.isArray(json.bonuses)) {
+          const newTalents: Talent[] = json.bonuses.map((b: any, index: number) => {
+            // Build a descriptive name and description from the bonus data
+            const name = b.name || b.bonusName || 'Unknown Bonus';
+            const descriptionParts = [];
+            
+            if (b.sourceType && b.sourceName) {
+              descriptionParts.push(`${b.sourceType}: ${b.sourceName}`);
+            }
+            if (b.bonusTo) {
+              descriptionParts.push(`Bonus to: ${b.bonusTo}`);
+            }
+            if (b.bonusAmount) {
+              descriptionParts.push(`+${b.bonusAmount}`);
+            }
+            if (b.gainedAtLevel) {
+              descriptionParts.push(`Level ${b.gainedAtLevel}`);
+            }
+            
+            return {
+              id: `bonus-${index}`,
+              name,
+              description: descriptionParts.length > 0 ? descriptionParts.join(' | ') : 'Special ability'
+            };
+          });
+          
+          if (newTalents.length > 0) {
+            setTalents(newTalents);
+          }
+        }
+
+        // Map gear to inventory
+        if (json.gear) {
+          const newInventory: ItemData[] = json.gear.map((item: any) => ({
+            id: item.instanceId || `item-${Math.random()}`,
+            name: item.name || 'Unknown Item',
+            type: item.type === 'weapon' ? 'weapon' : 'gear',
+            equipped: false,
+            description: `${item.quantity || 1}x ${item.slots || 0} slots`,
+            value: { 
+              gold: item.currency === 'gp' ? item.cost : 0,
+              silver: item.currency === 'sp' ? item.cost : 0,
+              copper: item.currency === 'cp' ? item.cost : 0
+            },
+            damage: item.type === 'weapon' ? '1d4' : undefined
+          }));
+          setInventory(newInventory);
+        }
+
+        // Parse spells from spellsKnown field
+        if (json.spellsKnown && typeof json.spellsKnown === 'string') {
+          const spellNames = json.spellsKnown.split(',').map((name: string) => name.trim());
+          const newSpells: Spell[] = [];
+          
+          spellNames.forEach((spellName: string, index: number) => {
+            // Look up spell details from spells.json
+            const spellData = (spellsData as SpellData[]).find(
+              (s) => s.name.toLowerCase() === spellName.toLowerCase()
+            );
+            
+            if (spellData) {
+              newSpells.push({
+                id: `spell-${index}`,
+                name: spellData.name,
+                level: spellData.tier,
+                description: `${spellData.range} | ${spellData.duration} | ${spellData.description}`
+              });
+            } else {
+              // If spell not found in database, add it with basic info
+              newSpells.push({
+                id: `spell-${index}`,
+                name: spellName,
+                level: 1,
+                description: 'Details not available'
+              });
+            }
+          });
+          
+          if (newSpells.length > 0) {
+            setSpells(newSpells);
+          }
+        }
+
+        alert('Character imported successfully!');
+      } catch (error) {
+        console.error('Error importing character:', error);
+        alert('Error importing character file. Please check the file format.');
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset the input so the same file can be imported again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleToggleEquipped = (id: string) => {
     setInventory((items: ItemData[]) =>
@@ -256,6 +431,26 @@ function App() {
 
         {!showShop && (
           <>
+            {/* Import Button */}
+            <div className="border-b-2 border-black p-2 bg-white relative z-10">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={importCharacter}
+                className="hidden"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                size="sm"
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Upload size={16} />
+                Import Character JSON
+              </Button>
+            </div>
+
             {/* View Indicator - hidden on large screens */}
             <div className="flex border-b-2 border-black relative z-10 lg:hidden">
               <button
@@ -285,7 +480,7 @@ function App() {
             </div>
 
             {/* Main Content Area - swipeable on mobile, side-by-side on large screens */}
-            <div {...handlers} className="flex-1 overflow-hidden relative lg:overflow-visible">
+            <div {...handlers} className="flex-1 overflow-hidden relative lg:overflow-visible min-h-0">
               {/* Mobile: sliding carousel layout, Desktop: side-by-side */}
               <div
                 className="flex h-full transition-transform duration-300 ease-out lg:transition-none lg:!transform-none"
@@ -297,7 +492,7 @@ function App() {
                 }}
               >
                 {/* Character Attributes View */}
-                <div className="w-full flex-shrink-0 p-4 overflow-auto lg:w-1/3 lg:border-r-2 lg:border-black">
+                <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
                   <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
                     Character Info
                   </h2>
@@ -314,7 +509,7 @@ function App() {
                 </div>
 
                 {/* Player View */}
-                <div className="w-full flex-shrink-0 p-4 overflow-auto lg:w-1/3 lg:border-r-2 lg:border-black">
+                <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
                   <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
                     Character Sheet
                   </h2>
@@ -330,7 +525,7 @@ function App() {
                 </div>
 
                 {/* Inventory View */}
-                <div className="w-full flex-shrink-0 p-4 overflow-auto lg:w-1/3">
+                <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3">
                   <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
                     Inventory
                   </h2>

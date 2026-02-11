@@ -142,7 +142,7 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, onUpdateHP, onUpdat
       </div>
 
       {/* Spells Section */}
-      <div className="flex-1 overflow-auto">
+      <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={20} />
           <h2 className="text-xl font-black uppercase">Spells</h2>

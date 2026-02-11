@@ -1,0 +1,374 @@
+{
+  "name": "Pebble",
+  "stats": {
+    "STR": 11,
+    "DEX": 13,
+    "CON": 14,
+    "INT": 17,
+    "WIS": 8,
+    "CHA": 10
+  },
+  "rolledStats": {
+    "STR": 11,
+    "DEX": 13,
+    "CON": 14,
+    "INT": 17,
+    "WIS": 8,
+    "CHA": 10
+  },
+  "ancestry": "Kobold",
+  "class": "Wizard",
+  "level": 3,
+  "levels": [
+    {
+      "level": 1,
+      "talentRolledDesc": "Gain advantage on casting one spell you know",
+      "talentRolledName": "AdvOnCastOneSpell",
+      "Rolled12TalentOrTwoStatPoints": "",
+      "Rolled12ChosenTalentDesc": "",
+      "Rolled12ChosenTalentName": "",
+      "HitPointRoll": 4,
+      "stoutHitPointRoll": 0
+    },
+    {
+      "level": 2,
+      "talentRolledDesc": "",
+      "talentRolledName": "",
+      "Rolled12TalentOrTwoStatPoints": "",
+      "Rolled12ChosenTalentDesc": "",
+      "Rolled12ChosenTalentName": "",
+      "HitPointRoll": 2,
+      "stoutHitPointRoll": 0
+    },
+    {
+      "level": 3,
+      "talentRolledDesc": "Gain advantage on casting one spell you know",
+      "talentRolledName": "AdvOnCastOneSpell",
+      "Rolled12TalentOrTwoStatPoints": "Choose a Talent",
+      "Rolled12ChosenTalentDesc": "",
+      "Rolled12ChosenTalentName": "",
+      "HitPointRoll": 3,
+      "stoutHitPointRoll": 0
+    }
+  ],
+  "XP": 0,
+  "ambitionTalentLevel": {
+    "level": 1,
+    "talentRolledDesc": "",
+    "talentRolledName": "",
+    "Rolled12TalentOrTwoStatPoints": "",
+    "Rolled12ChosenTalentDesc": "",
+    "Rolled12ChosenTalentName": "",
+    "HitPointRoll": 0,
+    "stoutHitPointRoll": 0
+  },
+  "title": "Seer",
+  "alignment": "Neutral",
+  "background": "Wolfchild",
+  "deity": "Gede",
+  "maxHitPoints": 11,
+  "armorClass": 11,
+  "gearSlotsTotal": 11,
+  "gearSlotsUsed": 10,
+  "bonuses": [
+    {
+      "sourceType": "Ancestry",
+      "sourceName": "Kobold",
+      "sourceCategory": "Ability",
+      "gainedAtLevel": 1,
+      "name": "Knack",
+      "bonusName": "Plus1ToCastingSpells",
+      "bonusTo": "Spellcasting",
+      "bonusAmount": 1
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "gainedAtLevel": 1,
+      "name": "ExtraLanguage: Wizard 1",
+      "bonusTo": "Languages",
+      "bonusName": "Sylvan"
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "gainedAtLevel": 1,
+      "name": "ExtraLanguage: Wizard 2",
+      "bonusTo": "Languages",
+      "bonusName": "Thanian"
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "gainedAtLevel": 1,
+      "name": "ExtraLanguage: Wizard 3",
+      "bonusTo": "Languages",
+      "bonusName": "Diabolic"
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "gainedAtLevel": 1,
+      "name": "ExtraLanguage: Wizard 4",
+      "bonusTo": "Languages",
+      "bonusName": "Primordial"
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "gainedAtLevel": 1,
+      "name": "Spell: Wizard, Tier 1, Spell 1",
+      "bonusTo": "Tier:1, Spell:1",
+      "bonusName": "Mage Armor"
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "gainedAtLevel": 1,
+      "name": "Spell: Wizard, Tier 1, Spell 2",
+      "bonusTo": "Tier:1, Spell:2",
+      "bonusName": "Light"
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "gainedAtLevel": 1,
+      "name": "Spell: Wizard, Tier 1, Spell 3",
+      "bonusTo": "Tier:1, Spell:3",
+      "bonusName": "Magic Missile"
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Talent",
+      "gainedAtLevel": 1,
+      "name": "AdvOnCastOneSpell",
+      "bonusTo": "AdvOnCastOneSpell",
+      "bonusName": "Mage Armor"
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "name": "Spell: Wizard, Tier 1, Spell 4",
+      "bonusName": "Charm Person",
+      "bonusTo": "Tier:1, Spell:4",
+      "gainedAtLevel": 2
+    },
+    {
+      "sourceType": "Class",
+      "sourceName": "Wizard",
+      "sourceCategory": "Ability",
+      "name": "Spell: Wizard, Tier 2, Spell 1",
+      "bonusName": "Acid Arrow",
+      "bonusTo": "Tier:2, Spell:1",
+      "gainedAtLevel": 3
+    }
+  ],
+  "goldRolled": 35,
+  "gold": 20,
+  "silver": 1,
+  "copper": 9,
+  "gear": [
+    {
+      "instanceId": "mligl2jd",
+      "gearId": "w36",
+      "name": "Dagger (obsidian)",
+      "type": "weapon",
+      "quantity": 1,
+      "totalUnits": 1,
+      "slots": 1,
+      "cost": 3,
+      "currency": "gp"
+    },
+    {
+      "instanceId": "mligl2je",
+      "gearId": "s2",
+      "name": "Backpack",
+      "type": "sundry",
+      "quantity": 1,
+      "totalUnits": 1,
+      "slots": 0,
+      "cost": 2,
+      "currency": "gp"
+    },
+    {
+      "instanceId": "mligl2jf",
+      "gearId": "s8",
+      "name": "Flint and steel",
+      "type": "sundry",
+      "quantity": 1,
+      "totalUnits": 1,
+      "slots": 1,
+      "cost": 5,
+      "currency": "sp"
+    },
+    {
+      "instanceId": "mligl2jg",
+      "gearId": "s11",
+      "name": "Lantern",
+      "type": "sundry",
+      "quantity": 1,
+      "totalUnits": 1,
+      "slots": 1,
+      "cost": 5,
+      "currency": "gp"
+    },
+    {
+      "instanceId": "mligl2jh",
+      "gearId": "s13",
+      "name": "Oil, flask",
+      "type": "sundry",
+      "quantity": 4,
+      "totalUnits": 4,
+      "slots": 4,
+      "cost": 20,
+      "currency": "sp"
+    },
+    {
+      "instanceId": "mligl2jj",
+      "gearId": "s7",
+      "name": "Flask or bottle",
+      "type": "sundry",
+      "quantity": 1,
+      "totalUnits": 1,
+      "slots": 1,
+      "cost": 3,
+      "currency": "sp"
+    },
+    {
+      "instanceId": "mligl2jm",
+      "gearId": "s9",
+      "name": "Grappling hook",
+      "type": "sundry",
+      "quantity": 1,
+      "totalUnits": 1,
+      "slots": 1,
+      "cost": 1,
+      "currency": "gp"
+    },
+    {
+      "instanceId": "mligl2jn",
+      "gearId": "s16",
+      "name": "Rope, 60'",
+      "type": "sundry",
+      "quantity": 1,
+      "totalUnits": 1,
+      "slots": 1,
+      "cost": 1,
+      "currency": "gp"
+    }
+  ],
+  "treasures": [],
+  "magicItems": [],
+  "attacks": [
+    "DAGGER (OBSIDIAN): +1 (N), 1d6 (BREAKABLE, FIN)",
+    "SPELLS: To cast a Wizard spell, roll 1d20+4 vs a DC equal to 10 + the spell's tier."
+  ],
+  "ledger": [
+    {
+      "goldChange": 35,
+      "silverChange": 0,
+      "copperChange": 0,
+      "desc": "Starting gold",
+      "notes": ""
+    },
+    {
+      "goldChange": -3,
+      "silverChange": 0,
+      "copperChange": 0,
+      "desc": "Buy Dagger (obsidian)",
+      "notes": ""
+    },
+    {
+      "goldChange": -2,
+      "silverChange": 0,
+      "copperChange": 0,
+      "desc": "Buy Backpack",
+      "notes": ""
+    },
+    {
+      "goldChange": 0,
+      "silverChange": -5,
+      "copperChange": 0,
+      "desc": "Buy Flint and steel",
+      "notes": ""
+    },
+    {
+      "goldChange": -5,
+      "silverChange": 0,
+      "copperChange": 0,
+      "desc": "Buy Lantern",
+      "notes": ""
+    },
+    {
+      "goldChange": 0,
+      "silverChange": -5,
+      "copperChange": 0,
+      "desc": "Buy Oil, flask",
+      "notes": ""
+    },
+    {
+      "goldChange": 0,
+      "silverChange": -5,
+      "copperChange": 0,
+      "desc": "Buy Oil, flask",
+      "notes": ""
+    },
+    {
+      "goldChange": 0,
+      "silverChange": -3,
+      "copperChange": 0,
+      "desc": "Buy Flask or bottle",
+      "notes": ""
+    },
+    {
+      "goldChange": 0,
+      "silverChange": -5,
+      "copperChange": 0,
+      "desc": "Buy Oil, flask",
+      "notes": ""
+    },
+    {
+      "goldChange": 0,
+      "silverChange": -5,
+      "copperChange": 0,
+      "desc": "Buy Oil, flask",
+      "notes": ""
+    },
+    {
+      "goldChange": -1,
+      "silverChange": 0,
+      "copperChange": 0,
+      "desc": "Buy Grappling hook",
+      "notes": ""
+    },
+    {
+      "goldChange": -1,
+      "silverChange": 0,
+      "copperChange": 0,
+      "desc": "Buy Rope, 60'",
+      "notes": ""
+    }
+  ],
+  "spellsKnown": "Acid Arrow, Charm Person, Light, Mage Armor, Magic Missile",
+  "languages": "Common, Diabolic, Draconic, Primordial, Sylvan, Thanian",
+  "creationMethod": "Random 1",
+  "coreRulesOnly": true,
+  "activeSources": [
+    "SD",
+    "SG",
+    "CS1",
+    "CS2",
+    "CS3",
+    "CS4"
+  ],
+  "edits": []
+}

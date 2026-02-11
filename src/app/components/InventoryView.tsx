@@ -137,7 +137,7 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
       </div>
 
       {/* Other Items Section */}
-      <div className="flex-1 overflow-auto">
+      <div className="mb-6">
         <h3 className="text-lg font-black mb-3 uppercase">Items</h3>
         <div className="space-y-2">
           {otherItems.length === 0 ? (
