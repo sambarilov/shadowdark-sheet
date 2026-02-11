@@ -448,6 +448,33 @@ function App() {
       equipped: item.equipped
     }));
 
+  // Calculate AC: base 10, overridden by best equipped armor, plus best equipped shield bonus
+  const calculateAC = () => {
+    let ac = 10; // Base AC
+    
+    // Find highest AC from equipped armor
+    const equippedArmor = inventory.filter(
+      (item: ItemData) => item.type === 'armor' && item.equipped && item.armorAC !== undefined
+    );
+    if (equippedArmor.length > 0) {
+      const highestArmorAC = Math.max(...equippedArmor.map((item: ItemData) => item.armorAC || 0));
+      ac = highestArmorAC; // Override base AC with armor AC
+    }
+    
+    // Add best equipped shield bonus
+    const equippedShields = inventory.filter(
+      (item: ItemData) => item.type === 'shield' && item.equipped && item.shieldACBonus !== undefined
+    );
+    if (equippedShields.length > 0) {
+      const highestShieldBonus = Math.max(...equippedShields.map((item: ItemData) => item.shieldACBonus || 0));
+      ac += highestShieldBonus;
+    }
+    
+    return ac;
+  };
+
+  const calculatedAC = calculateAC();
+
   return (
     <div className="min-h-screen bg-white flex items-start justify-center">
       {/* Mobile Container for small screens, full-width for large screens */}
@@ -544,7 +571,7 @@ function App() {
                   <PlayerView
                     hp={hp}
                     maxHp={maxHp}
-                    ac={14}
+                    ac={calculatedAC}
                     weapons={weapons}
                     spells={spells}
                     onUpdateHP={setHp}
