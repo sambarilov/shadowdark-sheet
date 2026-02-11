@@ -549,7 +549,7 @@ function App() {
               >
                 {/* Character Attributes View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
-                  <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
+                  <h2 className="lg:hidden text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
                     Character Info
                   </h2>
                   <CharacterAttributesView
@@ -566,7 +566,7 @@ function App() {
 
                 {/* Player View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
-                  <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
+                  <h2 className="lg:hidden text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
                     Character Sheet
                   </h2>
                   <PlayerView
@@ -583,7 +583,7 @@ function App() {
 
                 {/* Inventory View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3">
-                  <h2 className="hidden lg:block text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
+                  <h2 className="lg:hidden text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
                     Inventory
                   </h2>
                   <InventoryView

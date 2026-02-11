@@ -3,6 +3,13 @@ import { Sword, Sparkles, Dices, Edit } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
@@ -48,14 +55,16 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
   const [editingMaxHP, setEditingMaxHP] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const [contextTarget, setContextTarget] = useState<{ weapon?: Weapon; spell?: Spell } | null>(null);
+  const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
 
   const rollDice = (sides: number) => {
     return Math.floor(Math.random() * sides) + 1;
   };
 
   const handleAttackRoll = (weapon: Weapon, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
-    // Get ability bonus for this weapon
-    const ability = abilities.find(a => a.shortName === weapon.weaponAbility);
+    // Get selected ability or default to weapon's ability
+    const selectedAbility = weaponAbilities[weapon.id] || weapon.weaponAbility;
+    const ability = abilities.find(a => a.shortName === selectedAbility);
     const abilityBonus = ability?.bonus || 0;
     
     // Roll attack
@@ -190,31 +199,47 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
             <p className="text-gray-500 italic">No equipped weapons</p>
           ) : (
             equippedWeapons.map((weapon) => (
-              <div key={weapon.id} className="border-2 border-black p-3 bg-white flex items-center justify-between">
-                <div>
-                  <div className="font-black">{weapon.name}</div>
-                  <div className="text-sm text-gray-600">Damage: {weapon.damage}</div>
-                </div>
-                <ContextMenu>
-                  <ContextMenuTrigger asChild>
-                    <Button
-                      onClick={() => handleAttackRoll(weapon)}
-                      className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-                      size="sm"
+              <div key={weapon.id} className="border-2 border-black p-3 bg-white">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex-1">
+                    <div className="font-black">{weapon.name}</div>
+                    <div className="text-sm text-gray-600">Damage: {weapon.damage}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={weaponAbilities[weapon.id] || weapon.weaponAbility}
+                      onValueChange={(value) => setWeaponAbilities({ ...weaponAbilities, [weapon.id]: value })}
                     >
-                      <Dices size={16} className="mr-1" />
-                      Roll
-                    </Button>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent>
-                    <ContextMenuItem onClick={() => handleAttackRoll(weapon, 'advantage')}>
-                      Roll with Advantage
-                    </ContextMenuItem>
-                    <ContextMenuItem onClick={() => handleAttackRoll(weapon, 'disadvantage')}>
-                      Roll with Disadvantage
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
+                      <SelectTrigger className="h-8 w-20 text-xs border-2 border-black">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="STR">STR</SelectItem>
+                        <SelectItem value="DEX">DEX</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <ContextMenu>
+                    <ContextMenuTrigger asChild>
+                      <Button
+                        onClick={() => handleAttackRoll(weapon)}
+                        className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+                        size="sm"
+                      >
+                        <Dices size={16} className="mr-1" />
+                        Roll
+                      </Button>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem onClick={() => handleAttackRoll(weapon, 'advantage')}>
+                        Roll with Advantage
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleAttackRoll(weapon, 'disadvantage')}>
+                        Roll with Disadvantage
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                </div>
               </div>
             ))
           )}

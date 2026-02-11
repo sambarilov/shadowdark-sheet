@@ -95,23 +95,6 @@ export function CharacterAttributesView({
         </div>
       )}
 
-      {/* Luck Token */}
-      <div className="mb-4">
-        <Button
-          onClick={onToggleLuckToken}
-          className={`w-full h-14 border-4 border-black ${
-            luckTokenUsed 
-              ? 'bg-gray-300 text-gray-600 line-through' 
-              : 'bg-white text-black hover:bg-gray-100'
-          }`}
-        >
-          <Sparkles size={20} className="mr-2" />
-          <span className="font-black uppercase">
-            Luck Token {luckTokenUsed ? '(Used)' : '(Available)'}
-          </span>
-        </Button>
-      </div>
-
       {/* Attributes Section */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
@@ -128,6 +111,23 @@ export function CharacterAttributesView({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Luck Token */}
+      <div className="mb-4">
+        <Button
+          onClick={onToggleLuckToken}
+          className={`w-full h-14 border-4 border-black ${
+            luckTokenUsed 
+              ? 'bg-gray-300 text-gray-600 line-through' 
+              : 'bg-white text-black hover:bg-gray-100'
+          }`}
+        >
+          <Sparkles size={20} className="mr-2" />
+          <span className="font-black uppercase">
+            Luck Token {luckTokenUsed ? '(Used)' : '(Available)'}
+          </span>
+        </Button>
       </div>
 
       {/* Abilities Section */}
