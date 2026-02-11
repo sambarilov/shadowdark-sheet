@@ -1,12 +1,19 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Sword, Sparkles, Dices, Edit } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from './ui/context-menu';
 
 interface Weapon {
   id: string;
   name: string;
   damage: string;
+  weaponAbility: string;
   equipped: boolean;
 }
 
@@ -17,36 +24,94 @@ interface Spell {
   description: string;
 }
 
+interface Ability {
+  name: string;
+  shortName: string;
+  score: number;
+  bonus: number;
+}
+
 interface PlayerViewProps {
   hp: number;
   maxHp: number;
   ac: number;
   weapons: Weapon[];
   spells: Spell[];
+  abilities: Ability[];
   onUpdateHP: (hp: number) => void;
   onUpdateMaxHP: (maxHp: number) => void;
 }
 
-export function PlayerView({ hp, maxHp, ac, weapons, spells, onUpdateHP, onUpdateMaxHP }: PlayerViewProps) {
+export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdateHP, onUpdateMaxHP }: PlayerViewProps) {
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [editingHP, setEditingHP] = useState(false);
   const [editingMaxHP, setEditingMaxHP] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const [contextTarget, setContextTarget] = useState<{ weapon?: Weapon; spell?: Spell } | null>(null);
 
   const rollDice = (sides: number) => {
     return Math.floor(Math.random() * sides) + 1;
   };
 
-  const handleAttackRoll = (weapon: Weapon) => {
-    const attackRoll = rollDice(20);
-    const damageRoll = rollDice(parseInt(weapon.damage.match(/\d+/)?.[0] || '6'));
-    setRollResult(`${weapon.name}: Attack ${attackRoll}, Damage ${damageRoll}`);
-    setTimeout(() => setRollResult(null), 3000);
+  const handleAttackRoll = (weapon: Weapon, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
+    // Get ability bonus for this weapon
+    const ability = abilities.find(a => a.shortName === weapon.weaponAbility);
+    const abilityBonus = ability?.bonus || 0;
+    
+    // Roll attack
+    let attackRoll: number;
+    let attackRollDetails = '';
+    
+    if (mode === 'advantage') {
+      const roll1 = rollDice(20);
+      const roll2 = rollDice(20);
+      attackRoll = Math.max(roll1, roll2);
+      attackRollDetails = ` [${roll1}, ${roll2}]`;
+    } else if (mode === 'disadvantage') {
+      const roll1 = rollDice(20);
+      const roll2 = rollDice(20);
+      attackRoll = Math.min(roll1, roll2);
+      attackRollDetails = ` [${roll1}, ${roll2}]`;
+    } else {
+      attackRoll = rollDice(20);
+    }
+    
+    const attackTotal = attackRoll + abilityBonus;
+    const attackBonusText = abilityBonus !== 0 ? ` ${abilityBonus >= 0 ? '+' : ''}${abilityBonus}` : '';
+    const attackTotalText = abilityBonus !== 0 ? ` = ${attackTotal}` : '';
+    
+    // Roll damage
+    const damageDieMatch = weapon.damage.match(/d(\d+)/);
+    const damageDie = damageDieMatch ? parseInt(damageDieMatch[1]) : 6;
+    const damageRoll = rollDice(damageDie);
+    const damageTotal = damageRoll + abilityBonus;
+    const damageBonusText = abilityBonus !== 0 ? ` ${abilityBonus >= 0 ? '+' : ''}${abilityBonus}` : '';
+    const damageTotalText = abilityBonus !== 0 ? ` = ${damageTotal}` : '';
+    
+    const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
+    setRollResult(`${weapon.name}${modeText}: Attack ${attackRoll}${attackRollDetails}${attackBonusText}${attackTotalText} | Damage ${damageRoll}${damageBonusText}${damageTotalText}`);
   };
 
-  const handleCastingRoll = (spell: Spell) => {
-    const castRoll = rollDice(20);
-    setRollResult(`${spell.name}: Cast Roll ${castRoll}`);
-    setTimeout(() => setRollResult(null), 3000);
+  const handleCastingRoll = (spell: Spell, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
+    let castRoll: number;
+    let rollDetails = '';
+    
+    if (mode === 'advantage') {
+      const roll1 = rollDice(20);
+      const roll2 = rollDice(20);
+      castRoll = Math.max(roll1, roll2);
+      rollDetails = ` [${roll1}, ${roll2}]`;
+    } else if (mode === 'disadvantage') {
+      const roll1 = rollDice(20);
+      const roll2 = rollDice(20);
+      castRoll = Math.min(roll1, roll2);
+      rollDetails = ` [${roll1}, ${roll2}]`;
+    } else {
+      castRoll = rollDice(20);
+    }
+    
+    const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
+    setRollResult(`${spell.name}${modeText}: ${castRoll}${rollDetails}`);
   };
 
   const equippedWeapons = weapons.filter(w => w.equipped);
@@ -105,7 +170,10 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, onUpdateHP, onUpdat
 
       {/* Roll Result Popup */}
       {rollResult && (
-        <div className="mb-4 border-4 border-black bg-black text-white p-4 text-center animate-in fade-in">
+        <div 
+          onClick={() => setRollResult(null)}
+          className="mb-4 border-4 border-black bg-black text-white p-4 text-center animate-in fade-in cursor-pointer"
+        >
           <Dices className="inline-block mr-2" size={20} />
           {rollResult}
         </div>
@@ -127,14 +195,26 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, onUpdateHP, onUpdat
                   <div className="font-black">{weapon.name}</div>
                   <div className="text-sm text-gray-600">Damage: {weapon.damage}</div>
                 </div>
-                <Button
-                  onClick={() => handleAttackRoll(weapon)}
-                  className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-                  size="sm"
-                >
-                  <Dices size={16} className="mr-1" />
-                  Roll
-                </Button>
+                <ContextMenu>
+                  <ContextMenuTrigger asChild>
+                    <Button
+                      onClick={() => handleAttackRoll(weapon)}
+                      className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+                      size="sm"
+                    >
+                      <Dices size={16} className="mr-1" />
+                      Roll
+                    </Button>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => handleAttackRoll(weapon, 'advantage')}>
+                      Roll with Advantage
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => handleAttackRoll(weapon, 'disadvantage')}>
+                      Roll with Disadvantage
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               </div>
             ))
           )}
@@ -160,14 +240,26 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, onUpdateHP, onUpdat
                       LVL {spell.level}
                     </span>
                   </div>
-                  <Button
-                    onClick={() => handleCastingRoll(spell)}
-                    className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-                    size="sm"
-                  >
-                    <Dices size={16} className="mr-1" />
-                    Cast
-                  </Button>
+                  <ContextMenu>
+                    <ContextMenuTrigger asChild>
+                      <Button
+                        onClick={() => handleCastingRoll(spell)}
+                        className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+                        size="sm"
+                      >
+                        <Dices size={16} className="mr-1" />
+                        Cast
+                      </Button>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem onClick={() => handleCastingRoll(spell, 'advantage')}>
+                        Roll with Advantage
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleCastingRoll(spell, 'disadvantage')}>
+                        Roll with Disadvantage
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 </div>
                 <p className="text-sm text-gray-600">{spell.description}</p>
               </div>

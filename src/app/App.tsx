@@ -445,6 +445,7 @@ function App() {
       id: item.id,
       name: item.name,
       damage: item.damage!,
+      weaponAbility: item.weaponAbility || 'STR',
       equipped: item.equipped
     }));
 
@@ -574,6 +575,7 @@ function App() {
                     ac={calculatedAC}
                     weapons={weapons}
                     spells={spells}
+                    abilities={abilities}
                     onUpdateHP={setHp}
                     onUpdateMaxHP={setMaxHp}
                   />

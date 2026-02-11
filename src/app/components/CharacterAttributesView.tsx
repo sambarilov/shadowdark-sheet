@@ -3,6 +3,12 @@ import { User, Star, Dices, Sparkles, Plus, Trash2, Edit } from 'lucide-react';
 import { Button } from './ui/button';
 import { EditAbilitiesDialog } from './EditAbilitiesDialog';
 import { EditTalentDialog } from './EditTalentDialog';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from './ui/context-menu';
 
 export interface CharacterAttribute {
   name: string;
@@ -51,18 +57,39 @@ export function CharacterAttributesView({
     return Math.floor(Math.random() * sides) + 1;
   };
 
-  const handleAbilityRoll = (ability: Ability) => {
-    const roll = rollDice(20);
+  const handleAbilityRoll = (ability: Ability, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
+    let roll: number;
+    let rollDetails = '';
+    
+    if (mode === 'advantage') {
+      const roll1 = rollDice(20);
+      const roll2 = rollDice(20);
+      roll = Math.max(roll1, roll2);
+      rollDetails = ` [${roll1}, ${roll2}]`;
+    } else if (mode === 'disadvantage') {
+      const roll1 = rollDice(20);
+      const roll2 = rollDice(20);
+      roll = Math.min(roll1, roll2);
+      rollDetails = ` [${roll1}, ${roll2}]`;
+    } else {
+      roll = rollDice(20);
+    }
+    
     const total = roll + ability.bonus;
-    setRollResult(`${ability.shortName}: ${roll} ${ability.bonus >= 0 ? '+' : ''}${ability.bonus} = ${total}`);
-    setTimeout(() => setRollResult(null), 3000);
+    const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
+    const bonusText = ability.bonus !== 0 ? ` ${ability.bonus >= 0 ? '+' : ''}${ability.bonus}` : '';
+    const totalText = ability.bonus !== 0 ? ` = ${total}` : '';
+    setRollResult(`${ability.shortName}${modeText}: ${roll}${rollDetails}${bonusText}${totalText}`);
   };
 
   return (
     <div className="flex flex-col">
       {/* Roll Result Popup */}
       {rollResult && (
-        <div className="mb-4 border-4 border-black bg-black text-white p-4 text-center animate-in fade-in">
+        <div 
+          onClick={() => setRollResult(null)}
+          className="mb-4 border-4 border-black bg-black text-white p-4 text-center animate-in fade-in cursor-pointer"
+        >
           <Dices className="inline-block mr-2" size={20} />
           {rollResult}
         </div>
@@ -85,36 +112,6 @@ export function CharacterAttributesView({
         </Button>
       </div>
 
-      {/* Abilities Section */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-black uppercase">Abilities</h2>
-          <Button
-            onClick={() => setShowAbilitiesDialog(true)}
-            size="sm"
-            variant="outline"
-            className="border-2 border-black"
-          >
-            <Edit size={16} />
-          </Button>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {abilities.map((ability) => (
-            <button
-              key={ability.shortName}
-              onClick={() => handleAbilityRoll(ability)}
-              className="border-2 border-black p-2 bg-white hover:bg-gray-100 active:bg-gray-200 transition-colors"
-            >
-              <div className="text-xs font-black uppercase">{ability.shortName}</div>
-              <div className="text-2xl font-black">{ability.score}</div>
-              <div className="text-sm text-gray-600">
-                {ability.bonus >= 0 ? '+' : ''}{ability.bonus}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Attributes Section */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
@@ -132,6 +129,48 @@ export function CharacterAttributesView({
           ))}
         </div>
       </div>
+
+      {/* Abilities Section */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-black uppercase">Abilities</h2>
+          <Button
+            onClick={() => setShowAbilitiesDialog(true)}
+            size="sm"
+            variant="outline"
+            className="border-2 border-black"
+          >
+            <Edit size={16} />
+          </Button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {abilities.map((ability) => (
+            <ContextMenu key={ability.shortName}>
+              <ContextMenuTrigger asChild>
+                <button
+                  onClick={() => handleAbilityRoll(ability)}
+                  className="border-2 border-black p-2 bg-white hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                >
+                  <div className="text-xs font-black uppercase">{ability.shortName}</div>
+                  <div className="text-2xl font-black">{ability.score}</div>
+                  <div className="text-sm text-gray-600">
+                    {ability.bonus >= 0 ? '+' : ''}{ability.bonus}
+                  </div>
+                </button>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem onClick={() => handleAbilityRoll(ability, 'advantage')}>
+                  Roll with Advantage
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => handleAbilityRoll(ability, 'disadvantage')}>
+                  Roll with Disadvantage
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
+          ))}
+        </div>
+      </div>
+
 
       {/* Talents Section */}
       <div className="mb-4">
