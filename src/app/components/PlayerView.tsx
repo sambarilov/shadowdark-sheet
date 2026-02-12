@@ -41,6 +41,7 @@ interface PlayerViewProps {
   hp: number;
   maxHp: number;
   ac: number;
+  acBonus: number;
   weapons: Weapon[];
   spells: Spell[];
   abilities: Ability[];
@@ -48,6 +49,7 @@ interface PlayerViewProps {
   notes: string;
   onUpdateHP: (hp: number) => void;
   onUpdateMaxHP: (maxHp: number) => void;
+  onUpdateAcBonus: (acBonus: number) => void;
   onToggleSpell: (id: string) => void;
   onAddSpell: (spell: Spell) => void;
   onRemoveSpell: (id: string) => void;
@@ -55,7 +57,7 @@ interface PlayerViewProps {
   onUpdateNotes: (notes: string) => void;
 }
 
-export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, weaponBonuses, notes, onUpdateHP, onUpdateMaxHP, onToggleSpell, onAddSpell, onRemoveSpell, onUpdateWeaponBonuses, onUpdateNotes }: PlayerViewProps) {
+export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities, weaponBonuses, notes, onUpdateHP, onUpdateMaxHP, onUpdateAcBonus, onToggleSpell, onAddSpell, onRemoveSpell, onUpdateWeaponBonuses, onUpdateNotes }: PlayerViewProps) {
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
   const [showSpellDialog, setShowSpellDialog] = useState(false);
@@ -168,7 +170,19 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, weaponBo
         </div>
         <div className="flex-1 border-4 border-black p-4 bg-white flex flex-col items-center justify-center">
           <div className="text-xs uppercase tracking-wider mb-1">Armor Class</div>
-          <div className="text-3xl font-black">{ac}</div>
+          <div className="flex items-center gap-1">
+            <div className="text-3xl font-black">{ac}</div>
+            <div className="flex items-center text-sm text-gray-600">
+              <span>(</span>
+              <EditableStatField
+                value={acBonus}
+                onUpdate={onUpdateAcBonus}
+                className="text-sm font-black w-8 text-center"
+                min={-99}
+              />
+              <span>)</span>
+            </div>
+          </div>
         </div>
       </div>
 

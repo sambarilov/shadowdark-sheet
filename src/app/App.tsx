@@ -44,6 +44,7 @@ function App() {
   const [maxHp, setMaxHp] = useState(32);
   const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
+  const [acBonus, setAcBonus] = useState(0);
   
   const [coins, setCoins] = useState({
     gold: 45,
@@ -699,7 +700,7 @@ function App() {
       attackBonus: item.attackBonus || 0
     }));
 
-  // Calculate AC: base 10, overridden by best equipped armor, plus best equipped shield bonus
+  // Calculate AC: base 10, overridden by best equipped armor, plus best equipped shield bonus, plus AC bonus
   const calculateAC = () => {
     let ac = 10; // Base AC
     
@@ -720,6 +721,9 @@ function App() {
       const highestShieldBonus = Math.max(...equippedShields.map((item: ItemData) => item.shieldACBonus || 0));
       ac += highestShieldBonus;
     }
+    
+    // Add AC bonus
+    ac += acBonus;
     
     return ac;
   };
@@ -835,6 +839,7 @@ function App() {
                     hp={hp}
                     maxHp={maxHp}
                     ac={calculatedAC}
+                    acBonus={acBonus}
                     weapons={weapons}
                     spells={spells}
                     abilities={abilities}
@@ -842,6 +847,7 @@ function App() {
                     notes={notes}
                     onUpdateHP={setHp}
                     onUpdateMaxHP={setMaxHp}
+                    onUpdateAcBonus={setAcBonus}
                     onToggleSpell={handleToggleSpell}
                     onAddSpell={handleAddSpell}
                     onRemoveSpell={handleRemoveSpell}
