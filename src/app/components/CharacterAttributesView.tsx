@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User, Star, Dices, Sparkles, Plus, Trash2, Edit } from 'lucide-react';
 import { Button } from './ui/button';
+import { EditableStatField } from './EditableStatField';
 import { EditAbilitiesDialog } from './EditAbilitiesDialog';
 import { EditTalentDialog } from './EditTalentDialog';
 import {
@@ -58,9 +59,6 @@ export function CharacterAttributesView({
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [showAbilitiesDialog, setShowAbilitiesDialog] = useState(false);
   const [showTalentDialog, setShowTalentDialog] = useState(false);
-  const [editingXP, setEditingXP] = useState(false);
-  const [tempCurrentXP, setTempCurrentXP] = useState(currentXP);
-  const [tempTotalXP, setTempTotalXP] = useState(totalXP);
 
   const rollDice = (sides: number) => {
     return Math.floor(Math.random() * sides) + 1;
@@ -124,6 +122,25 @@ export function CharacterAttributesView({
 
       {/* Luck Token and XP */}
       <div className="mb-4 grid grid-cols-2 gap-2">
+        <div className="h-14 border-4 border-black bg-white flex flex-col items-center justify-center">
+          <div className="text-xs uppercase tracking-wider text-gray-600">Experience</div>
+          <div className="flex items-center gap-1">
+            <EditableStatField
+              value={currentXP}
+              onUpdate={(val) => onUpdateXP(val, totalXP)}
+              className="text-lg font-black"
+              min={0}
+            />
+            <span className="text-sm">/</span>
+            <EditableStatField
+              value={totalXP}
+              onUpdate={(val) => onUpdateXP(currentXP, val)}
+              className="text-lg font-black"
+              min={1}
+            />
+          </div>
+        </div>
+
         <Button
           onClick={onToggleLuckToken}
           className={`h-14 border-4 border-black ${
@@ -137,70 +154,7 @@ export function CharacterAttributesView({
             Luck Token {luckTokenUsed ? '(Used)' : '(Available)'}
           </span>
         </Button>
-        
-        <div
-          onClick={() => {
-            setTempCurrentXP(currentXP);
-            setTempTotalXP(totalXP);
-            setEditingXP(true);
-          }}
-          className="h-14 border-4 border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100"
-        >
-          <div className="text-xs uppercase tracking-wider text-gray-600">Experience</div>
-          <div className="font-black text-lg">
-            {currentXP} / {totalXP}
-          </div>
-        </div>
       </div>
-
-      {/* XP Edit Dialog */}
-      {editingXP && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white border-4 border-black p-6 max-w-sm w-full mx-4">
-            <h3 className="text-xl font-black uppercase mb-4">Edit Experience Points</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-bold mb-1 block">Current XP</label>
-                <input
-                  type="number"
-                  value={tempCurrentXP}
-                  onChange={(e) => setTempCurrentXP(parseInt(e.target.value) || 0)}
-                  className="w-full border-2 border-black p-2 font-bold"
-                  min={0}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-bold mb-1 block">Total XP for Next Level</label>
-                <input
-                  type="number"
-                  value={tempTotalXP}
-                  onChange={(e) => setTempTotalXP(parseInt(e.target.value) || 0)}
-                  className="w-full border-2 border-black p-2 font-bold"
-                  min={0}
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 mt-6">
-              <Button
-                onClick={() => {
-                  onUpdateXP(tempCurrentXP, tempTotalXP);
-                  setEditingXP(false);
-                }}
-                className="flex-1 bg-black text-white hover:bg-gray-800"
-              >
-                Save
-              </Button>
-              <Button
-                onClick={() => setEditingXP(false)}
-                variant="outline"
-                className="flex-1 border-2 border-black"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Abilities Section */}
       <div className="mb-6">

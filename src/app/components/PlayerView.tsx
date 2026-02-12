@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sword, Sparkles, Dices } from 'lucide-react';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
+import { EditableStatField } from './EditableStatField';
 import {
   Select,
   SelectContent,
@@ -51,8 +51,6 @@ interface PlayerViewProps {
 
 export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdateHP, onUpdateMaxHP }: PlayerViewProps) {
   const [rollResult, setRollResult] = useState<string | null>(null);
-  const [editingHP, setEditingHP] = useState(false);
-  const [editingMaxHP, setEditingMaxHP] = useState(false);
   const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
 
   const rollDice = (sides: number) => {
@@ -130,43 +128,19 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
         <div className="flex-1 border-4 border-black p-4 bg-white">
           <div className="text-xs uppercase tracking-wider mb-1">Hit Points</div>
           <div className="flex items-center gap-2">
-            {editingHP ? (
-              <Input
-                type="number"
-                value={hp}
-                onChange={(e) => onUpdateHP(parseInt(e.target.value) || 0)}
-                onBlur={() => setEditingHP(false)}
-                className="w-16 text-2xl font-black border-2 border-black p-1"
-                autoFocus
-                min={0}
-              />
-            ) : (
-              <div 
-                className="text-3xl font-black cursor-pointer hover:text-gray-600"
-                onClick={() => setEditingHP(true)}
-              >
-                {hp}
-              </div>
-            )}
+            <EditableStatField
+              value={hp}
+              onUpdate={onUpdateHP}
+              className="text-3xl font-black"
+              min={0}
+            />
             <span className="text-lg">/</span>
-            {editingMaxHP ? (
-              <Input
-                type="number"
-                value={maxHp}
-                onChange={(e) => onUpdateMaxHP(parseInt(e.target.value) || 1)}
-                onBlur={() => setEditingMaxHP(false)}
-                className="w-16 text-lg font-black border-2 border-black p-1"
-                autoFocus
-                min={1}
-              />
-            ) : (
-              <div 
-                className="text-lg font-black cursor-pointer hover:text-gray-600"
-                onClick={() => setEditingMaxHP(true)}
-              >
-                {maxHp}
-              </div>
-            )}
+            <EditableStatField
+              value={maxHp}
+              onUpdate={onUpdateMaxHP}
+              className="text-lg font-black"
+              min={1}
+            />
           </div>
         </div>
         <div className="flex-1 border-4 border-black p-4 bg-white">
