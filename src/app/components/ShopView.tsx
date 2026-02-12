@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Search, ShoppingCart, ArrowLeft, Coins, Plus, Upload, Download } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
@@ -52,6 +53,10 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [importJsonText, setImportJsonText] = useState('');
+  const [exportJsonText, setExportJsonText] = useState('');
   const [editingItem, setEditingItem] = useState<ShopItem | null>(null);
   const [newItemName, setNewItemName] = useState('');
   const [newItemCategory, setNewItemCategory] = useState('Weapons');
@@ -157,7 +162,12 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
     };
 
     const jsonString = JSON.stringify(storeData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
+    setExportJsonText(jsonString);
+    setShowExportDialog(true);
+  };
+
+  const handleDownloadExport = () => {
+    const blob = new Blob([exportJsonText], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -166,6 +176,58 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    toast.success('Store exported successfully!');
+  };
+
+  const handleCopyExport = async () => {
+    try {
+      await navigator.clipboard.writeText(exportJsonText);
+      toast.success('Copied to clipboard!');
+    } catch (error) {
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
+  const processImportData = (json: any) => {
+    if (json.shopItems && Array.isArray(json.shopItems)) {
+      // Clear existing shop items and replace with imported ones
+      json.shopItems.forEach((item: ShopItem) => {
+        // Remove all existing items first (done once)
+        if (json.shopItems[0] === item) {
+          shopItems.forEach(existingItem => onRemoveShopItem(existingItem.id));
+        }
+        // Add imported item
+        onAddShopItem(item);
+      });
+      
+      // Import markup values
+      if (json.buyMarkup !== undefined) {
+        onBuyMarkupChange(json.buyMarkup);
+      }
+      if (json.sellMarkup !== undefined) {
+        onSellMarkupChange(json.sellMarkup);
+      }
+      
+      toast.success('Store imported successfully!');
+    } else {
+      toast.error('Invalid store file format.');
+    }
+  };
+
+  const handleImportFromPaste = () => {
+    if (!importJsonText.trim()) {
+      toast.error('Please paste JSON content');
+      return;
+    }
+    
+    try {
+      const json = JSON.parse(importJsonText);
+      processImportData(json);
+      setShowImportDialog(false);
+      setImportJsonText('');
+    } catch (error) {
+      toast.error('Invalid JSON format');
+    }
   };
 
   const handleImportStore = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,32 +238,10 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
     reader.onload = (e: ProgressEvent<FileReader>) => {
       try {
         const json = JSON.parse(e.target?.result as string);
-        if (json.shopItems && Array.isArray(json.shopItems)) {
-          // Clear existing shop items and replace with imported ones
-          json.shopItems.forEach((item: ShopItem) => {
-            // Remove all existing items first (done once)
-            if (json.shopItems[0] === item) {
-              shopItems.forEach(existingItem => onRemoveShopItem(existingItem.id));
-            }
-            // Add imported item
-            onAddShopItem(item);
-          });
-          
-          // Import markup values
-          if (json.buyMarkup !== undefined) {
-            onBuyMarkupChange(json.buyMarkup);
-          }
-          if (json.sellMarkup !== undefined) {
-            onSellMarkupChange(json.sellMarkup);
-          }
-          
-          alert('Store imported successfully!');
-        } else {
-          alert('Invalid store file format.');
-        }
+        processImportData(json);
       } catch (error) {
         console.error('Error importing store:', error);
-        alert('Error importing store file.');
+        toast.error('Error importing store file.');
       }
     };
     reader.readAsText(file);
@@ -226,40 +266,50 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
         </Button>
         <h2 className="text-2xl font-black uppercase">Shop</h2>
         <div className="flex items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportStore}
-            className="hidden"
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            size="sm"
-            variant="outline"
-            className="border-2 border-black"
-            title="Import Store"
-          >
-            <Upload size={16} />
-          </Button>
-          <Button
-            onClick={handleExportStore}
-            size="sm"
-            variant="outline"
-            className="border-2 border-black"
-            title="Export Store"
-          >
-            <Download size={16} />
-          </Button>
-          <Button
-            onClick={() => setShowAddDialog(true)}
-            size="sm"
-            variant="outline"
-            className="border-2 border-black"
-            title="Add Item"
-          >
-            <Plus size={16} />
-          </Button>
+          {mode === 'buy' ? (
+            <>
+              <div className="flex items-center gap-1">
+                <Label className="text-xs font-black whitespace-nowrap">Markup:</Label>
+                <Input
+                  type="number"
+                  value={buyMarkup}
+                  onChange={(e) => onBuyMarkupChange(parseInt(e.target.value) || 0)}
+                  className="w-16 h-8 text-xs border-2 border-black"
+                  placeholder="0"
+                />
+                <span className="text-xs font-black">%</span>
+              </div>
+              <Button
+                onClick={() => setShowImportDialog(true)}
+                size="sm"
+                variant="outline"
+                className="border-2 border-black"
+                title="Import Store"
+              >
+                <Upload size={16} />
+              </Button>
+              <Button
+                onClick={handleExportStore}
+                size="sm"
+                variant="outline"
+                className="border-2 border-black"
+                title="Export Store"
+              >
+                <Download size={16} />
+              </Button>
+              <Button
+                onClick={() => setShowAddDialog(true)}
+                size="sm"
+                variant="outline"
+                className="border-2 border-black"
+                title="Add Item"
+              >
+                <Plus size={16} />
+              </Button>
+            </>
+          ) : (
+            <></>  
+          )}
         </div>
       </div>
       <div className="flex justify-between gap-4 mb-4">
@@ -552,6 +602,96 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
               className="bg-black text-white hover:bg-gray-800 border-2 border-black"
             >
               {editingItem ? 'Save Changes' : 'Add Item'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Store Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="border-4 border-black max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Import Store</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="font-black mb-2 block">Upload File</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={(e) => {
+                  handleImportStore(e);
+                  setShowImportDialog(false);
+                }}
+                className="block w-full text-sm border-2 border-black p-2"
+              />
+            </div>
+            <div className="text-center font-black">OR</div>
+            <div>
+              <Label className="font-black mb-2 block">Paste JSON</Label>
+              <Textarea
+                value={importJsonText}
+                onChange={(e) => setImportJsonText(e.target.value)}
+                placeholder="Paste your store JSON here..."
+                className="border-2 border-black font-mono text-xs h-64"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowImportDialog(false)}
+              variant="outline"
+              className="border-2 border-black"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportFromPaste}
+              className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+            >
+              Import from Paste
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Store Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="border-4 border-black max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Export Store</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="font-black mb-2 block">Store JSON</Label>
+              <Textarea
+                value={exportJsonText}
+                readOnly
+                className="border-2 border-black font-mono text-xs h-64"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowExportDialog(false)}
+              variant="outline"
+              className="border-2 border-black"
+            >
+              Close
+            </Button>
+            <Button
+              onClick={handleCopyExport}
+              variant="outline"
+              className="border-2 border-black"
+            >
+              Copy to Clipboard
+            </Button>
+            <Button
+              onClick={handleDownloadExport}
+              className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+            >
+              Download File
             </Button>
           </DialogFooter>
         </DialogContent>

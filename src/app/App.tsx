@@ -5,8 +5,10 @@ import { InventoryView, type ItemData } from './components/InventoryView';
 import { CharacterAttributesView, type CharacterAttribute, type Talent, type Ability } from './components/CharacterAttributesView';
 import { ShopView, type ShopItem } from './components/ShopView';
 import { DiceRollerDrawer } from './components/DiceRollerDrawer';
-import { Upload, Download } from 'lucide-react';
 import { Button } from './components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './components/ui/dialog';
+import { Textarea } from './components/ui/textarea';
+import { Label } from './components/ui/label';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import spellsData from '../../assets/json/spells.json';
@@ -34,10 +36,14 @@ interface Spell {
 
 function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('player');
+  const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('attributes');
   const [showShop, setShowShop] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
   const [diceRollResult, setDiceRollResult] = useState<string | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [importJsonText, setImportJsonText] = useState('');
+  const [exportJsonText, setExportJsonText] = useState('');
   const [luckTokenUsed, setLuckTokenUsed] = useState(false);
   const [characterImported, setCharacterImported] = useState(false);
   const [currentXP, setCurrentXP] = useState(0);
@@ -82,256 +88,6 @@ function App() {
     { name: 'Background', value: '' },
     { name: 'Alignment', value: '' }
   ]);
-
-  const importCharacter = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      try {
-        const json = JSON.parse(e.target?.result as string);
-        
-        // Map character attributes
-        setCharacterAttributes([
-          { name: 'Name', value: json.name || 'Unknown' },
-          { name: 'Ancestry', value: json.ancestry || 'Unknown' },
-          { name: 'Class', value: json.class || 'Unknown' },
-          { name: 'Level', value: json.level?.toString() || '1' },
-          { name: 'Background', value: json.background || 'Unknown' },
-          { name: 'Alignment', value: json.alignment || 'Neutral' }
-        ]);
-
-        // Map abilities/stats
-        const statMap: Record<string, string> = {
-          'STR': 'Strength',
-          'DEX': 'Dexterity',
-          'CON': 'Constitution',
-          'INT': 'Intelligence',
-          'WIS': 'Wisdom',
-          'CHA': 'Charisma'
-        };
-        
-        if (json.stats) {
-          const newAbilities: Ability[] = Object.entries(json.stats).map(([key, value]) => {
-            const score = value as number;
-            const bonus = Math.floor((score - 10) / 2);
-            return {
-              name: statMap[key] || key,
-              shortName: key,
-              score,
-              bonus
-            };
-          });
-          setAbilities(newAbilities);
-        }
-
-        // Map HP
-        if (json.maxHitPoints) {
-          setMaxHp(json.maxHitPoints);
-          setHp(json.maxHitPoints); // Start at max
-        }
-
-        // Map XP
-        if (json.XP !== undefined) {
-          setCurrentXP(json.XP);
-        }
-        if (json.totalXP !== undefined) {
-          setTotalXP(json.totalXP);
-        } else {
-          // Calculate total XP based on level if not provided
-          const level = json.level || 1;
-          const xpForLevel = level * 10; // Simple calculation
-          setTotalXP(xpForLevel);
-        }
-
-        // Map coins
-        setCoins({
-          gold: json.gold || 0,
-          silver: json.silver || 0,
-          copper: json.copper || 0
-        });
-
-        // Map languages
-        if (json.languages) {
-          setLanguages(json.languages);
-        }
-
-        // Map AC bonus
-        if (json.acBonus !== undefined) {
-          setAcBonus(json.acBonus);
-        }
-
-        // Map weapon bonuses
-        if (json.weaponBonuses) {
-          setWeaponBonuses(json.weaponBonuses);
-        }
-
-        // Map notes
-        if (json.notes) {
-          setNotes(json.notes);
-        }
-
-        // Map shop data
-        if (json.shop) {
-          if (json.shop.shopItems && Array.isArray(json.shop.shopItems)) {
-            setShopItems(json.shop.shopItems);
-          }
-          if (json.shop.buyMarkup !== undefined) {
-            setBuyMarkup(json.shop.buyMarkup);
-          }
-          if (json.shop.sellMarkup !== undefined) {
-            setSellMarkup(json.shop.sellMarkup);
-          }
-        }
-
-        // Map talents from bonuses
-        if (json.bonuses && Array.isArray(json.bonuses)) {
-          const newTalents: Talent[] = json.bonuses.map((b: any, index: number) => {
-            // Build a descriptive name and description from the bonus data
-            const name = b.name || b.bonusName || 'Unknown Bonus';
-            const descriptionParts = [];
-            
-            if (b.sourceType && b.sourceName) {
-              descriptionParts.push(`${b.sourceType}: ${b.sourceName}`);
-            }
-            if (b.bonusTo) {
-              descriptionParts.push(`Bonus to: ${b.bonusTo}`);
-            }
-            if (b.bonusAmount) {
-              descriptionParts.push(`+${b.bonusAmount}`);
-            }
-            if (b.gainedAtLevel) {
-              descriptionParts.push(`Level ${b.gainedAtLevel}`);
-            }
-            
-            return {
-              id: `bonus-${index}`,
-              name,
-              description: descriptionParts.length > 0 ? descriptionParts.join(' | ') : 'Special ability'
-            };
-          });
-          
-          if (newTalents.length > 0) {
-            setTalents(newTalents);
-          }
-        }
-
-        // Map gear to inventory
-        if (json.gear) {
-          const ITEMS_PER_TYPE: Record<string, ItemType> = {
-            'Arrows': 'consumable',
-            'Crossbow bolts': 'consumable',
-            'Iron spikes': 'consumable',
-            'Rations': 'consumable',
-            'Shield': 'shield',
-            'Leather armor': 'armor',
-            'Oil, flask': 'consumable',
-            'Chainmail': 'armor',
-            'Plate armor': 'armor',
-            'Mithral chainmail': 'armor',
-            'Mithral shield': 'shield',
-          }
-
-          const itemType = (item: any): ItemType => {
-            if (item.type == 'weapon') return 'weapon';
-           
-            return ITEMS_PER_TYPE[item.name] || 'gear';
-          }
-
-          const newInventory: ItemData[] = json.gear.map((item: any) => {
-            const itemData: ItemData = {
-              id: item.instanceId || `item-${Math.random()}`,
-              name: item.name || 'Unknown Item',
-              type: itemType(item),
-              equipped: item.equipped || false,
-              description: item.description || '',
-              quantity: item.quantity || 1,
-              value: { 
-                gold: item.currency === 'gp' ? item.cost : 0,
-                silver: item.currency === 'sp' ? item.cost : 0,
-                copper: item.currency === 'cp' ? item.cost : 0
-              },
-              damage: item.damage || undefined,
-              attackBonus: item.attackBonus || undefined,
-              weaponAbility: item.weaponAbility || undefined,
-              armorAC: item.armorAC || undefined,
-              shieldACBonus: item.shieldACBonus || undefined,
-              slots: item.slots || 1
-            };
-            
-            // If item has totalUnits, import consumable tracking fields
-            if (item.totalUnits !== undefined) {
-              itemData.totalUnits = item.totalUnits;
-              // Use imported currentUnits if present, otherwise default to totalUnits
-              itemData.currentUnits = item.currentUnits !== undefined ? item.currentUnits : item.totalUnits;
-              // Calculate unitsPerSlot if not present
-              if (item.unitsPerSlot === undefined) {
-                itemData.unitsPerSlot = item.totalUnits / (item.slots || 1);
-              } else {
-                itemData.unitsPerSlot = item.unitsPerSlot;
-              }
-            }
-            
-            return itemData;
-          });
-          setInventory(newInventory);
-        }
-
-        // Parse spells from spellsKnown field
-        if (json.spellsKnown && typeof json.spellsKnown === 'string') {
-          const spellNames = json.spellsKnown.split(',').map((name: string) => name.trim());
-          const newSpells: Spell[] = [];
-          
-          spellNames.forEach((spellName: string, index: number) => {
-            // Look up spell details from spells.json
-            const spellData = (spellsData as SpellData[]).find(
-              (s) => s.name.toLowerCase() === spellName.toLowerCase()
-            );
-            
-            if (spellData) {
-              newSpells.push({
-                id: `spell-${index}`,
-                name: spellData.name,
-                level: spellData.tier,
-                duration: spellData.duration,
-                range: spellData.range,
-                description: spellData.description,
-                active: true
-              });
-            } else {
-              // If spell not found in database, add it with basic info
-              newSpells.push({
-                id: `spell-${index}`,
-                name: spellName,
-                level: 1,
-                duration: '',
-                range: '',
-                description: 'Details not available',
-                active: true
-              });
-            }
-          });
-          
-          if (newSpells.length > 0) {
-            setSpells(newSpells);
-          }
-        }
-
-        setCharacterImported(true);
-        alert('Character imported successfully!');
-      } catch (error) {
-        console.error('Error importing character:', error);
-        alert('Error importing character file. Please check the file format.');
-      }
-    };
-    reader.readAsText(file);
-    
-    // Reset the input so the same file can be imported again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
 
   const exportCharacter = () => {
     try {
@@ -450,22 +206,293 @@ function App() {
         }
       };
       
-      // Create and download the JSON file
+      // Create JSON and show export dialog
       const jsonString = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${characterName.replace(/\s+/g, '_')}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success('Character exported successfully!');
+      setExportJsonText(jsonString);
+      setShowExportDialog(true);
     } catch (error) {
       console.error('Error exporting character:', error);
       toast.error('Error exporting character');
+    }
+  };
+
+  const handleDownloadExport = () => {
+    const characterName = characterAttributes.find(attr => attr.name === 'Name')?.value || 'Character';
+    const blob = new Blob([exportJsonText], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${characterName.replace(/\s+/g, '_')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Character exported successfully!');
+  };
+
+  const handleCopyExport = async () => {
+    try {
+      await navigator.clipboard.writeText(exportJsonText);
+      toast.success('Copied to clipboard!');
+    } catch (error) {
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
+  const handleOpenImportDialog = () => {
+    setImportJsonText('');
+    setShowImportDialog(true);
+  };
+
+  const handleImportFromPaste = () => {
+    if (!importJsonText.trim()) {
+      toast.error('Please paste JSON content');
+      return;
+    }
+    
+    try {
+      const json = JSON.parse(importJsonText);
+      processImportData(json);
+      setShowImportDialog(false);
+      setImportJsonText('');
+    } catch (error) {
+      toast.error('Invalid JSON format');
+    }
+  };
+
+  const processImportData = (json: any) => {
+    // Map character attributes
+    setCharacterAttributes([
+      { name: 'Name', value: json.name || 'Unknown' },
+      { name: 'Ancestry', value: json.ancestry || 'Unknown' },
+      { name: 'Class', value: json.class || 'Unknown' },
+      { name: 'Level', value: json.level?.toString() || '1' },
+      { name: 'Background', value: json.background || 'Unknown' },
+      { name: 'Alignment', value: json.alignment || 'Neutral' }
+    ]);
+
+    // Continue with all the existing mapping logic...
+    const statMap: Record<string, string> = {
+      'STR': 'Strength',
+      'DEX': 'Dexterity',
+      'CON': 'Constitution',
+      'INT': 'Intelligence',
+      'WIS': 'Wisdom',
+      'CHA': 'Charisma'
+    };
+
+    if (json.stats || json.rolledStats) {
+      const stats = json.stats || json.rolledStats;
+      const newAbilities = abilities.map((ability: Ability) => {
+        const score = stats[ability.shortName] || 10;
+        const bonus = Math.floor((score - 10) / 2);
+        return { ...ability, score, bonus };
+      });
+      setAbilities(newAbilities);
+    }
+
+    // Map HP
+    if (json.maxHitPoints !== undefined) {
+      setMaxHp(json.maxHitPoints);
+      setHp(json.maxHitPoints);
+    }
+
+    // Map XP
+    if (json.XP !== undefined) {
+      setCurrentXP(json.XP);
+    }
+    if (json.totalXP !== undefined) {
+      setTotalXP(json.totalXP);
+    }
+
+    // Map coins
+    setCoins({
+      gold: json.gold || 0,
+      silver: json.silver || 0,
+      copper: json.copper || 0
+    });
+
+    // Map languages
+    if (json.languages) {
+      setLanguages(json.languages);
+    }
+
+    // Map AC bonus
+    if (json.acBonus !== undefined) {
+      setAcBonus(json.acBonus);
+    }
+
+    // Map weapon bonuses
+    if (json.weaponBonuses) {
+      setWeaponBonuses(json.weaponBonuses);
+    }
+
+    // Map notes
+    if (json.notes) {
+      setNotes(json.notes);
+    }
+
+    // Map shop data
+    if (json.shop) {
+      if (json.shop.shopItems && Array.isArray(json.shop.shopItems)) {
+        setShopItems(json.shop.shopItems);
+      }
+      if (json.shop.buyMarkup !== undefined) {
+        setBuyMarkup(json.shop.buyMarkup);
+      }
+      if (json.shop.sellMarkup !== undefined) {
+        setSellMarkup(json.shop.sellMarkup);
+      }
+    }
+
+    // Map talents from bonuses
+    if (json.bonuses && Array.isArray(json.bonuses)) {
+      const newTalents: Talent[] = json.bonuses.map((b: any, index: number) => {
+        const name = b.name || b.bonusName || 'Unknown Bonus';
+        const descriptionParts = [];
+        
+        if (b.sourceType && b.sourceName) {
+          descriptionParts.push(`${b.sourceType}: ${b.sourceName}`);
+        }
+        if (b.bonusTo) {
+          descriptionParts.push(`Bonus to: ${b.bonusTo}`);
+        }
+        if (b.bonusAmount) {
+          descriptionParts.push(`+${b.bonusAmount}`);
+        }
+        if (b.gainedAtLevel) {
+          descriptionParts.push(`Level ${b.gainedAtLevel}`);
+        }
+        
+        return {
+          id: `bonus-${index}`,
+          name,
+          description: descriptionParts.length > 0 ? descriptionParts.join(' | ') : 'Special ability'
+        };
+      });
+      
+      if (newTalents.length > 0) {
+        setTalents(newTalents);
+      }
+    }
+
+    // Map gear to inventory
+    if (json.gear) {
+      const ITEMS_PER_TYPE: Record<string, ItemType> = {
+        'Arrows': 'consumable',
+        'Crossbow bolts': 'consumable',
+        'Iron spikes': 'consumable',
+        'Rations': 'consumable',
+        'Shield': 'shield',
+        'Leather armor': 'armor',
+        'Oil, flask': 'consumable',
+        'Chainmail': 'armor',
+        'Plate armor': 'armor',
+        'Mithral chainmail': 'armor',
+        'Mithral shield': 'shield',
+      }
+
+      const itemType = (item: any): ItemType => {
+        if (item.type == 'weapon') return 'weapon';
+       
+        return ITEMS_PER_TYPE[item.name] || 'gear';
+      }
+
+      const newInventory: ItemData[] = json.gear.map((item: any) => {
+        const itemData: ItemData = {
+          id: item.instanceId || `item-${Math.random()}`,
+          name: item.name || 'Unknown Item',
+          type: itemType(item),
+          equipped: item.equipped || false,
+          description: item.description || '',
+          quantity: item.quantity || 1,
+          value: { 
+            gold: item.currency === 'gp' ? item.cost : 0,
+            silver: item.currency === 'sp' ? item.cost : 0,
+            copper: item.currency === 'cp' ? item.cost : 0
+          },
+          damage: item.damage || undefined,
+          attackBonus: item.attackBonus || undefined,
+          weaponAbility: item.weaponAbility || undefined,
+          armorAC: item.armorAC || undefined,
+          shieldACBonus: item.shieldACBonus || undefined,
+          slots: item.slots || 1
+        };
+
+        if (item.totalUnits !== undefined) {
+          itemData.totalUnits = item.totalUnits;
+          itemData.currentUnits = item.currentUnits !== undefined ? item.currentUnits : item.totalUnits;
+          itemData.unitsPerSlot = item.unitsPerSlot || 1;
+        }
+
+        return itemData;
+      });
+      
+      setInventory(newInventory);
+    }
+
+    // Map spells
+    if (json.spellsKnown && typeof json.spellsKnown === 'string') {
+      const spellNames = json.spellsKnown.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+      const spellsDatabase: SpellData[] = spellsData as SpellData[];
+      
+      const newSpells: Spell[] = [];
+      spellNames.forEach((spellName: string, index: number) => {
+        const spellInfo = spellsDatabase.find(
+          (s: SpellData) => s.name.toLowerCase() === spellName.toLowerCase()
+        );
+        
+        if (spellInfo) {
+          newSpells.push({
+            id: `spell-${index}`,
+            name: spellInfo.name,
+            level: spellInfo.tier,
+            duration: spellInfo.duration,
+            range: spellInfo.range,
+            description: spellInfo.description,
+            active: true
+          });
+        } else {
+          newSpells.push({
+            id: `spell-${index}`,
+            name: spellName,
+            level: 1,
+            duration: '',
+            range: '',
+            description: 'Details not available',
+            active: true
+          });
+        }
+      });
+      
+      if (newSpells.length > 0) {
+        setSpells(newSpells);
+      }
+    }
+
+    setCharacterImported(true);
+    toast.success('Character imported successfully!');
+  };
+
+  const importCharacter = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        processImportData(json);
+      } catch (error) {
+        console.error('Error importing character:', error);
+        toast.error('Error importing character file. Please check the file format.');
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset the input so the same file can be imported again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -687,35 +714,6 @@ function App() {
 
         {!showShop && (
           <>
-            {/* Import/Export Button */}
-            <div className="border-b-2 border-black p-2 bg-white relative z-10">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={importCharacter}
-                className="hidden"
-              />
-              <Button
-                onClick={() => characterImported ? exportCharacter() : fileInputRef.current?.click()}
-                variant="outline"
-                size="sm"
-                className="w-full flex items-center justify-center gap-2"
-              >
-                {characterImported ? (
-                  <>
-                    <Download size={16} />
-                    Export Character JSON
-                  </>
-                ) : (
-                  <>
-                    <Upload size={16} />
-                    Import Character JSON
-                  </>
-                )}
-              </Button>
-            </div>
-
             {/* View Indicator - hidden on large screens */}
             <div className="flex border-b-2 border-black relative z-10 lg:hidden">
               <button
@@ -766,6 +764,7 @@ function App() {
                     currentXP={currentXP}
                     totalXP={totalXP}
                     languages={languages}
+                    characterImported={characterImported}
                     onToggleLuckToken={() => setLuckTokenUsed(!luckTokenUsed)}
                     onUpdateXP={(current, total) => {
                       setCurrentXP(current);
@@ -776,6 +775,8 @@ function App() {
                     onUpdateAbilities={setAbilities}
                     onAddTalent={handleAddTalent}
                     onRemoveTalent={handleRemoveTalent}
+                    onImportCharacter={handleOpenImportDialog}
+                    onExportCharacter={exportCharacter}
                   />
                 </div>
 
@@ -888,6 +889,97 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* Import Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="border-4 border-black max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Import Character</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="font-black mb-2 block">Upload File</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={(e) => {
+                  importCharacter(e);
+                  setShowImportDialog(false);
+                }}
+                className="block w-full text-sm border-2 border-black p-2"
+              />
+            </div>
+            <div className="text-center font-black">OR</div>
+            <div>
+              <Label className="font-black mb-2 block">Paste JSON</Label>
+              <Textarea
+                value={importJsonText}
+                onChange={(e) => setImportJsonText(e.target.value)}
+                placeholder="Paste your character JSON here..."
+                className="border-2 border-black font-mono text-xs h-64"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowImportDialog(false)}
+              variant="outline"
+              className="border-2 border-black"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportFromPaste}
+              className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+            >
+              Import from Paste
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="border-4 border-black max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Export Character</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="font-black mb-2 block">Character JSON</Label>
+              <Textarea
+                value={exportJsonText}
+                readOnly
+                className="border-2 border-black font-mono text-xs h-64"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowExportDialog(false)}
+              variant="outline"
+              className="border-2 border-black"
+            >
+              Close
+            </Button>
+            <Button
+              onClick={handleCopyExport}
+              variant="outline"
+              className="border-2 border-black"
+            >
+              Copy to Clipboard
+            </Button>
+            <Button
+              onClick={handleDownloadExport}
+              className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+            >
+              Download File
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Toaster richColors position="top-center" />
     </div>
   );

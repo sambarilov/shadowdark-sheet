@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Star, Dices, Sparkles, Plus, Edit } from 'lucide-react';
+import { User, Star, Dices, Sparkles, Plus, Edit, Upload, Download } from 'lucide-react';
 import { Button } from './ui/button';
 import { EditableStatField } from './EditableStatField';
 import { EditAbilitiesDialog } from './EditAbilitiesDialog';
@@ -37,6 +37,7 @@ interface CharacterAttributesViewProps {
   currentXP: number;
   totalXP: number;
   languages: string;
+  characterImported: boolean;
   onToggleLuckToken: () => void;
   onUpdateXP: (current: number, total: number) => void;
   onUpdateLanguages: (languages: string) => void;
@@ -44,6 +45,8 @@ interface CharacterAttributesViewProps {
   onUpdateAbilities: (abilities: Ability[]) => void;
   onAddTalent: (talent: Talent) => void;
   onRemoveTalent: (id: string) => void;
+  onImportCharacter: () => void;
+  onExportCharacter: () => void;
 }
 
 export function CharacterAttributesView({ 
@@ -54,13 +57,16 @@ export function CharacterAttributesView({
   currentXP,
   totalXP,
   languages,
+  characterImported,
   onToggleLuckToken,
   onUpdateXP,
   onUpdateLanguages,
   onUpdateAttributes,
   onUpdateAbilities,
   onAddTalent,
-  onRemoveTalent
+  onRemoveTalent,
+  onImportCharacter,
+  onExportCharacter
 }: CharacterAttributesViewProps) {
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [showAbilitiesDialog, setShowAbilitiesDialog] = useState(false);
@@ -111,9 +117,31 @@ export function CharacterAttributesView({
 
       {/* Attributes Section */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <User size={20} />
-          <h2 className="text-xl font-black uppercase">Character</h2>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <User size={20} />
+            <h2 className="text-xl font-black uppercase">Character</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={onImportCharacter}
+              size="sm"
+              variant="outline"
+              className="border-2 border-black"
+              title="Import Character"
+            >
+              <Upload size={16} />
+            </Button>
+            <Button
+              onClick={onExportCharacter}
+              size="sm"
+              variant="outline"
+              className="border-2 border-black"
+              title="Export Character"
+            >
+              <Download size={16} />
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {attributes.map((attr, index) => (
