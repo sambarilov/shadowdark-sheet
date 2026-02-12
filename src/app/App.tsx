@@ -502,8 +502,8 @@ function App() {
 
         if (item.totalUnits !== undefined) {
           itemData.totalUnits = item.totalUnits;
+          itemData.unitsPerSlot = item.unitsPerSlot || item.totalUnits || 1;
           itemData.currentUnits = item.currentUnits !== undefined ? item.currentUnits : item.totalUnits;
-          itemData.unitsPerSlot = item.unitsPerSlot || 1;
         }
 
         return itemData;
