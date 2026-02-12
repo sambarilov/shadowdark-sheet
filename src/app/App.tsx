@@ -267,6 +267,21 @@ function App() {
           setLanguages(json.languages);
         }
 
+        // Map AC bonus
+        if (json.acBonus !== undefined) {
+          setAcBonus(json.acBonus);
+        }
+
+        // Map weapon bonuses
+        if (json.weaponBonuses) {
+          setWeaponBonuses(json.weaponBonuses);
+        }
+
+        // Map notes
+        if (json.notes) {
+          setNotes(json.notes);
+        }
+
         // Map talents from bonuses
         if (json.bonuses && Array.isArray(json.bonuses)) {
           const newTalents: Talent[] = json.bonuses.map((b: any, index: number) => {
@@ -326,22 +341,27 @@ function App() {
               id: item.instanceId || `item-${Math.random()}`,
               name: item.name || 'Unknown Item',
               type: itemType(item),
-              equipped: false,
-              description: item.description,
+              equipped: item.equipped || false,
+              description: item.description || '',
               quantity: item.quantity || 1,
               value: { 
                 gold: item.currency === 'gp' ? item.cost : 0,
                 silver: item.currency === 'sp' ? item.cost : 0,
                 copper: item.currency === 'cp' ? item.cost : 0
               },
-              damage: item.type === 'weapon' ? '1d4' : undefined,
+              damage: item.damage || undefined,
+              attackBonus: item.attackBonus || undefined,
+              weaponAbility: item.weaponAbility || undefined,
+              armorAC: item.armorAC || undefined,
+              shieldACBonus: item.shieldACBonus || undefined,
               slots: item.slots || 1
             };
             
-            // If item has totalUnits, set currentUnits equal to totalUnits
+            // If item has totalUnits, import consumable tracking fields
             if (item.totalUnits !== undefined) {
               itemData.totalUnits = item.totalUnits;
-              itemData.currentUnits = item.totalUnits;
+              // Use imported currentUnits if present, otherwise default to totalUnits
+              itemData.currentUnits = item.currentUnits !== undefined ? item.currentUnits : item.totalUnits;
               // Calculate unitsPerSlot if not present
               if (item.unitsPerSlot === undefined) {
                 itemData.unitsPerSlot = item.totalUnits / (item.slots || 1);
@@ -457,6 +477,7 @@ function App() {
         instanceId: item.id,
         name: item.name,
         type: item.type,
+        description: item.description || '',
         quantity: item.quantity || 1,
         slots: item.slots || 1,
         cost: item.value?.gold || item.value?.silver || item.value?.copper || 0,
@@ -464,7 +485,12 @@ function App() {
         equipped: item.equipped || false,
         damage: item.damage || undefined,
         weaponAbility: item.weaponAbility || undefined,
-        armorAC: item.armorAC || undefined
+        attackBonus: item.attackBonus || undefined,
+        armorAC: item.armorAC || undefined,
+        shieldACBonus: item.shieldACBonus || undefined,
+        totalUnits: item.totalUnits || undefined,
+        currentUnits: item.currentUnits || undefined,
+        unitsPerSlot: item.unitsPerSlot || undefined
       }));
       
       // Build spellsKnown string
@@ -502,6 +528,7 @@ function App() {
         deity: '',
         maxHitPoints: maxHp,
         armorClass: calculatedAC,
+        acBonus,
         gearSlotsTotal,
         gearSlotsUsed,
         bonuses,
@@ -510,7 +537,9 @@ function App() {
         languages,
         gold: coins.gold,
         silver: coins.silver,
-        copper: coins.copper
+        copper: coins.copper,
+        weaponBonuses,
+        notes
       };
       
       // Create and download the JSON file
