@@ -97,10 +97,15 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     const attackBonusText = totalBonus !== 0 ? ` ${totalBonus >= 0 ? '+' : ''}${totalBonus}` : '';
     const attackTotalText = totalBonus !== 0 ? ` = ${attackTotal}` : '';
 
+    // Check for critical hit (natural 20)
+    const isCritical = attackRoll === 20;
+
     // Roll damage
     const damageDieMatch = weapon.damage.match(/d(\d+)/);
     const damageDie = damageDieMatch ? parseInt(damageDieMatch[1]) : 6;
-    const damageRoll = rollDice(damageDie);
+    const damageRoll1 = rollDice(damageDie);
+    const damageRoll2 = isCritical ? rollDice(damageDie) : 0;
+    const damageRoll = damageRoll1 + damageRoll2;
     
     // Handle damage bonus (can be a number or dice roll like "1d4")
     let damageBonusValue = 0;
@@ -110,8 +115,14 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
       if (bonusDiceMatch) {
         // It's a dice roll
         const bonusDie = parseInt(bonusDiceMatch[1]);
-        damageBonusValue = rollDice(bonusDie);
-        damageBonusText = ` + ${weapon.damageBonus}(${damageBonusValue})`;
+        const bonusRoll1 = rollDice(bonusDie);
+        const bonusRoll2 = isCritical ? rollDice(bonusDie) : 0;
+        damageBonusValue = bonusRoll1 + bonusRoll2;
+        if (isCritical) {
+          damageBonusText = ` + ${weapon.damageBonus}(${bonusRoll1}+${bonusRoll2})`;
+        } else {
+          damageBonusText = ` + ${weapon.damageBonus}(${bonusRoll1})`;
+        }
       } else {
         // It's a number
         damageBonusValue = parseInt(weapon.damageBonus) || 0;
@@ -123,9 +134,11 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     
     const damageTotal = damageRoll + damageBonusValue;
     const damageTotalText = damageBonusValue !== 0 ? ` = ${damageTotal}` : '';
+    const criticalText = isCritical ? ' CRITICAL HIT!' : '';
+    const damageRollText = isCritical ? `${damageRoll1}+${damageRoll2}` : `${damageRoll}`;
 
     const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
-    onShowRollResult(`${weapon.name}${modeText}: Attack ${attackRoll}${attackRollDetails}${attackBonusText}${attackTotalText} | Damage ${damageRoll}${damageBonusText}${damageTotalText}`);
+    onShowRollResult(`${weapon.name}${modeText}: Attack ${attackRoll}${attackRollDetails}${attackBonusText}${attackTotalText}${criticalText} | Damage ${damageRollText}${damageBonusText}${damageTotalText}`);
   };
 
   const handleCastingRoll = (spell: Spell, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
