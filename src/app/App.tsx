@@ -771,7 +771,7 @@ function App() {
                   currentView === 'attributes' ? 'bg-black text-white' : 'bg-white'
                 }`}
               >
-                Info
+                Attributes
               </button>
               <button
                 onClick={() => setCurrentView('player')}
@@ -779,7 +779,7 @@ function App() {
                   currentView === 'player' ? 'bg-black text-white' : 'bg-white'
                 }`}
               >
-                Character
+                Combat
               </button>
               <button
                 onClick={() => setCurrentView('inventory')}
@@ -805,9 +805,6 @@ function App() {
               >
                 {/* Character Attributes View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
-                  <h2 className="lg:hidden text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
-                    Character Info
-                  </h2>
                   <CharacterAttributesView
                     attributes={characterAttributes}
                     abilities={abilities}
@@ -831,9 +828,6 @@ function App() {
 
                 {/* Player View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
-                  <h2 className="lg:hidden text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
-                    Character Sheet
-                  </h2>
                   <PlayerView
                     hp={hp}
                     maxHp={maxHp}
@@ -851,9 +845,6 @@ function App() {
 
                 {/* Inventory View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3">
-                  <h2 className="lg:hidden text-xl font-black uppercase mb-4 border-b-2 border-black pb-2">
-                    Inventory
-                  </h2>
                   <InventoryView
                     items={inventory}
                     onToggleEquipped={handleToggleEquipped}

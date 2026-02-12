@@ -97,12 +97,12 @@ export function CharacterAttributesView({
   };
 
   return (
-    <div className="flex flex-col">
-      {/* Roll Result Popup */}
+    <div className="flex flex-col relative">
+      {/* Roll Result Popup - Floating */}
       {rollResult && (
         <div 
           onClick={() => setRollResult(null)}
-          className="mb-4 border-4 border-black bg-black text-white p-4 text-center animate-in fade-in cursor-pointer"
+          className="fixed top-1/10 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md"
         >
           <Dices className="inline-block mr-2" size={20} />
           {rollResult}

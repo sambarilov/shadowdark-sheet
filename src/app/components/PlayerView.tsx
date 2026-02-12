@@ -131,7 +131,18 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
   const equippedWeapons = weapons.filter(w => w.equipped);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
+      {/* Roll Result Popup - Floating */}
+      {rollResult && (
+        <div 
+          onClick={() => setRollResult(null)}
+          className="fixed top-1/10 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md"
+        >
+          <Dices className="inline-block mr-2" size={20} />
+          {rollResult}
+        </div>
+      )}
+      
       {/* Header Stats */}
       <div className="flex gap-4 mb-6">
         <div className="flex-1 border-4 border-black p-4 bg-white flex flex-col items-center justify-center">
@@ -157,17 +168,6 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
           <div className="text-3xl font-black">{ac}</div>
         </div>
       </div>
-
-      {/* Roll Result Popup */}
-      {rollResult && (
-        <div 
-          onClick={() => setRollResult(null)}
-          className="mb-4 border-4 border-black bg-black text-white p-4 text-center animate-in fade-in cursor-pointer"
-        >
-          <Dices className="inline-block mr-2" size={20} />
-          {rollResult}
-        </div>
-      )}
 
       {/* Weapons Section */}
       <div className="mb-6">
