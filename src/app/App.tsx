@@ -3,7 +3,7 @@ import { useSwipeable } from 'react-swipeable';
 import { PlayerView } from './components/PlayerView';
 import { InventoryView, type ItemData } from './components/InventoryView';
 import { CharacterAttributesView, type CharacterAttribute, type Talent, type Ability } from './components/CharacterAttributesView';
-import { ShopView, type ShopItem } from './components/ShopView';
+import { ShopView } from './components/ShopView';
 import { DiceRollerDrawer } from './components/DiceRollerDrawer';
 import { EditSpellDialog } from './components/EditSpellDialog';
 import { Button } from './components/ui/button';
@@ -122,7 +122,7 @@ function App() {
 
   const [spells, setSpells] = useState<Spell[]>([]);
 
-  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [shopItems, setShopItems] = useState<ItemData[]>([]);
 
   const [characterAttributes, setCharacterAttributes] = useState<CharacterAttribute[]>([
     { name: 'Name', value: '' },
@@ -435,6 +435,7 @@ function App() {
         'Plate armor': 'armor',
         'Mithral chainmail': 'armor',
         'Mithral shield': 'shield',
+        'Torch': 'consumable'
       }
 
       const itemType = (item: any): ItemType => {
@@ -659,9 +660,9 @@ function App() {
     return parts.join(' ');
   };
 
-  const handleBuyItem = (shopItem: ShopItem) => {
+  const handleBuyItem = (shopItem: ItemData) => {
     // Calculate total cost in copper (1 gold = 10 silver, 1 silver = 10 copper)
-    const itemCostInCopper = (shopItem.price.gold * 100) + (shopItem.price.silver * 10) + shopItem.price.copper;
+    const itemCostInCopper = (shopItem.value.gold * 100) + (shopItem.value.silver * 10) + shopItem.value.copper;
     const playerCopperTotal = (coins.gold * 100) + (coins.silver * 10) + coins.copper;
 
     if (playerCopperTotal >= itemCostInCopper) {
@@ -678,22 +679,16 @@ function App() {
         copper: newCopper
       });
 
-      // Add item to inventory
+      // Add item to inventory (create new instance with unique ID)
       const newItem: ItemData = {
+        ...shopItem,
         id: `item-${Date.now()}`,
-        name: shopItem.name,
-        type: shopItem.category === 'Weapons' ? 'weapon' : 
-              shopItem.category === 'Armor' ? 'armor' : 'gear',
-        damage: shopItem.damage,
-        equipped: false,
-        description: shopItem.description,
-        value: shopItem.price,
-        slots: 1
+        equipped: false
       };
 
       setInventory((items: ItemData[]) => [...items, newItem]);
       toast.success(`Purchased ${shopItem.name}!`, {
-        description: `Spent ${formatPrice(shopItem.price)}`
+        description: `Spent ${formatPrice(shopItem.value)}`
       });
     } else {
       toast.error('Not enough coins!', {
@@ -718,12 +713,12 @@ function App() {
     });
   };
 
-  const handleAddShopItem = (item: ShopItem) => {
+  const handleAddShopItem = (item: ItemData) => {
     setShopItems([...shopItems, item]);
     toast.success(`Added ${item.name} to shop!`);
   };
 
-  const handleUpdateShopItem = (updatedItem: ShopItem) => {
+  const handleUpdateShopItem = (updatedItem: ItemData) => {
     setShopItems(shopItems.map(item => item.id === updatedItem.id ? updatedItem : item));
     toast.success(`Updated ${updatedItem.name}!`);
   };

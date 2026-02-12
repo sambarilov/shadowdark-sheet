@@ -3,37 +3,23 @@ import { Search, ShoppingCart, ArrowLeft, Coins, Plus, Upload, Download } from '
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from './ui/context-menu';
-import type { ItemData } from './InventoryView';
-
-export interface ShopItem {
-  id: string;
-  name: string;
-  category: string;
-  price: {
-    gold: number;
-    silver: number;
-    copper: number;
-  };
-  damage?: string;
-  description: string;
-}
+import { EditItemDialog, type ItemData } from './EditItemDialog';
 
 interface ShopViewProps {
   onClose: () => void;
-  onBuyItem: (item: ShopItem) => void;
+  onBuyItem: (item: ItemData) => void;
   onSellItem: (item: ItemData, sellPrice: { gold: number; silver: number; copper: number }) => void;
-  onAddShopItem: (item: ShopItem) => void;
-  onUpdateShopItem: (item: ShopItem) => void;
+  onAddShopItem: (item: ItemData) => void;
+  onUpdateShopItem: (item: ItemData) => void;
   onRemoveShopItem: (id: string) => void;
   playerCoins: {
     gold: number;
@@ -41,7 +27,7 @@ interface ShopViewProps {
     copper: number;
   };
   inventoryItems: ItemData[];
-  shopItems: ShopItem[];
+  shopItems: ItemData[];
   buyMarkup: number;
   sellMarkup: number;
   onBuyMarkupChange: (value: number) => void;
@@ -57,18 +43,11 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [importJsonText, setImportJsonText] = useState('');
   const [exportJsonText, setExportJsonText] = useState('');
-  const [editingItem, setEditingItem] = useState<ShopItem | null>(null);
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemCategory, setNewItemCategory] = useState('Weapons');
-  const [newItemDescription, setNewItemDescription] = useState('');
-  const [newItemDamage, setNewItemDamage] = useState('');
-  const [newItemGold, setNewItemGold] = useState(0);
-  const [newItemSilver, setNewItemSilver] = useState(0);
-  const [newItemCopper, setNewItemCopper] = useState(0);
+  const [editingItem, setEditingItem] = useState<ItemData | null>(null);
 
   const filteredShopItems = shopItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -78,12 +57,13 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
   );
 
   const groupedItems = filteredShopItems.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
+    const category = item.type.charAt(0).toUpperCase() + item.type.slice(1) + 's';
+    if (!acc[category]) {
+      acc[category] = [];
     }
-    acc[item.category].push(item);
+    acc[category].push(item);
     return acc;
-  }, {} as Record<string, ShopItem[]>);
+  }, {} as Record<string, ItemData[]>);
 
   const formatPrice = (price: { gold: number; silver: number; copper: number }) => {
     const parts = [];
@@ -93,9 +73,9 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
     return parts.join(' ');
   };
 
-  const applyMarkup = (price: { gold: number; silver: number; copper: number }, markupPercent: number) => {
+  const applyMarkup = (value: { gold: number; silver: number; copper: number }, markupPercent: number) => {
     // Convert to copper for calculation
-    const totalCopper = (price.gold * 100) + (price.silver * 10) + price.copper;
+    const totalCopper = (value.gold * 100) + (value.silver * 10) + value.copper;
     const adjustedCopper = Math.floor(totalCopper * (1 + markupPercent / 100));
     
     // Convert back to gold/silver/copper
@@ -106,49 +86,12 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
     return { gold, silver, copper };
   };
 
-  const handleCreateShopItem = () => {
-    if (!newItemName.trim()) return;
-
+  const handleSaveShopItem = (item: ItemData) => {
     if (editingItem) {
-      // Edit existing item
-      const updatedItem: ShopItem = {
-        ...editingItem,
-        name: newItemName,
-        category: newItemCategory,
-        description: newItemDescription,
-        damage: newItemDamage || undefined,
-        price: {
-          gold: newItemGold,
-          silver: newItemSilver,
-          copper: newItemCopper,
-        },
-      };
-      onUpdateShopItem(updatedItem);
+      onUpdateShopItem(item);
     } else {
-      // Add new item
-      const newItem: ShopItem = {
-        id: `shop-${Date.now()}-${Math.random()}`,
-        name: newItemName,
-        category: newItemCategory,
-        description: newItemDescription,
-        damage: newItemDamage || undefined,
-        price: {
-          gold: newItemGold,
-          silver: newItemSilver,
-          copper: newItemCopper
-        }
-      };
-      onAddShopItem(newItem);
+      onAddShopItem(item);
     }
-    
-    // Reset form
-    setNewItemName('');
-    setNewItemCategory('Weapons');
-    setNewItemDescription('');
-    setNewItemDamage('');
-    setNewItemGold(0);
-    setNewItemSilver(0);
-    setNewItemCopper(0);
     setShowAddDialog(false);
     setEditingItem(null);
   };
@@ -191,7 +134,7 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
   const processImportData = (json: any) => {
     if (json.shopItems && Array.isArray(json.shopItems)) {
       // Clear existing shop items and replace with imported ones
-      json.shopItems.forEach((item: ShopItem) => {
+      json.shopItems.forEach((item: ItemData) => {
         // Remove all existing items first (done once)
         if (json.shopItems[0] === item) {
           shopItems.forEach(existingItem => onRemoveShopItem(existingItem.id));
@@ -385,11 +328,11 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
                                 )}
                                 <div className="text-sm text-gray-600 mt-1">{item.description}</div>
                                 <div className="text-sm font-black mt-2">
-                                  {formatPrice(applyMarkup(item.price, buyMarkup))}
+                                  {formatPrice(applyMarkup(item.value, buyMarkup))}
                                 </div>
                               </div>
                               <Button
-                                onClick={() => onBuyItem({ ...item, price: applyMarkup(item.price, buyMarkup) })}
+                                onClick={() => onBuyItem({ ...item, value: applyMarkup(item.value, buyMarkup) })}
                                 size="sm"
                                 className="bg-black text-white hover:bg-gray-800 border-2 border-black"
                               >
@@ -402,13 +345,6 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
                         <ContextMenuContent>
                           <ContextMenuItem onClick={() => {
                             setEditingItem(item);
-                            setNewItemName(item.name);
-                            setNewItemCategory(item.category);
-                            setNewItemDescription(item.description);
-                            setNewItemDamage(item.damage || '');
-                            setNewItemGold(item.price.gold);
-                            setNewItemSilver(item.price.silver);
-                            setNewItemCopper(item.price.copper);
                             setShowAddDialog(true);
                           }}>
                             Edit Item
@@ -469,126 +405,16 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
         )}
       </div>
 
-      {/* Add Shop Item Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={(open) => {
-        setShowAddDialog(open);
-        if (!open) {
+      {/* Add/Edit Shop Item Dialog */}
+      <EditItemDialog
+        open={showAddDialog}
+        item={editingItem || undefined}
+        onSave={handleSaveShopItem}
+        onClose={() => {
+          setShowAddDialog(false);
           setEditingItem(null);
-          setNewItemName('');
-          setNewItemCategory('Weapons');
-          setNewItemDescription('');
-          setNewItemDamage('');
-          setNewItemGold(0);
-          setNewItemSilver(0);
-          setNewItemCopper(0);
-        }
-      }}>
-        <DialogContent className="border-4 border-black">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase">{editingItem ? 'Edit Shop Item' : 'Add Shop Item'}</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label className="font-black">Name</Label>
-              <Input
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-                className="border-2 border-black"
-                placeholder="Item name"
-              />
-            </div>
-
-            <div>
-              <Label className="font-black">Category</Label>
-              <Select value={newItemCategory} onValueChange={setNewItemCategory}>
-                <SelectTrigger className="border-2 border-black">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Weapons">Weapons</SelectItem>
-                  <SelectItem value="Armor">Armor</SelectItem>
-                  <SelectItem value="Consumables">Consumables</SelectItem>
-                  <SelectItem value="Gear">Gear</SelectItem>
-                  <SelectItem value="Treasure">Treasure</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="font-black">Description</Label>
-              <Textarea
-                value={newItemDescription}
-                onChange={(e) => setNewItemDescription(e.target.value)}
-                className="border-2 border-black"
-                placeholder="Item description"
-              />
-            </div>
-
-            <div>
-              <Label className="font-black">Damage (optional)</Label>
-              <Input
-                value={newItemDamage}
-                onChange={(e) => setNewItemDamage(e.target.value)}
-                className="border-2 border-black"
-                placeholder="e.g., 1d8"
-              />
-            </div>
-
-            <div>
-              <Label className="font-black">Price</Label>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <Label className="text-xs">Gold</Label>
-                  <Input
-                    type="number"
-                    value={newItemGold}
-                    onChange={(e) => setNewItemGold(parseInt(e.target.value) || 0)}
-                    className="border-2 border-black"
-                    min={0}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Silver</Label>
-                  <Input
-                    type="number"
-                    value={newItemSilver}
-                    onChange={(e) => setNewItemSilver(parseInt(e.target.value) || 0)}
-                    className="border-2 border-black"
-                    min={0}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Copper</Label>
-                  <Input
-                    type="number"
-                    value={newItemCopper}
-                    onChange={(e) => setNewItemCopper(parseInt(e.target.value) || 0)}
-                    className="border-2 border-black"
-                    min={0}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={() => setShowAddDialog(false)}
-              variant="outline"
-              className="border-2 border-black"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateShopItem}
-              className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-            >
-              {editingItem ? 'Save Changes' : 'Add Item'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        }}
+      />
 
       {/* Import Store Dialog */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
