@@ -2,6 +2,7 @@ import { Package, ShoppingBag, Coins, Plus } from 'lucide-react';
 import { Switch } from './ui/switch';
 import { Button } from './ui/button';
 import { EditItemDialog, type ItemData } from './EditItemDialog';
+import { EditableStatField } from './EditableStatField';
 import { useState } from 'react';
 import {
   ContextMenu,
@@ -23,9 +24,10 @@ interface InventoryViewProps {
     silver: number;
     copper: number;
   };
+  onUpdateCoins: (gold: number, silver: number, copper: number) => void;
 }
 
-export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onRemoveItem, onUseItem, strScore, coins }: InventoryViewProps) {
+export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onRemoveItem, onUseItem, strScore, coins, onUpdateCoins }: InventoryViewProps) {
   const [showItemDialog, setShowItemDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<ItemData | undefined>(undefined);
 
@@ -99,15 +101,30 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="text-xs uppercase text-gray-600">Gold</div>
-            <div className="text-lg font-black">{coins.gold}</div>
+            <EditableStatField
+              value={coins.gold}
+              onUpdate={(value) => onUpdateCoins(value, coins.silver, coins.copper)}
+              className="text-lg font-black"
+              min={0}
+            />
           </div>
           <div>
             <div className="text-xs uppercase text-gray-600">Silver</div>
-            <div className="text-lg font-black">{coins.silver}</div>
+            <EditableStatField
+              value={coins.silver}
+              onUpdate={(value) => onUpdateCoins(coins.gold, value, coins.copper)}
+              className="text-lg font-black"
+              min={0}
+            />
           </div>
           <div>
             <div className="text-xs uppercase text-gray-600">Copper</div>
-            <div className="text-lg font-black">{coins.copper}</div>
+            <EditableStatField
+              value={coins.copper}
+              onUpdate={(value) => onUpdateCoins(coins.gold, coins.silver, value)}
+              className="text-lg font-black"
+              min={0}
+            />
           </div>
         </div>
       </div>

@@ -538,6 +538,10 @@ function App() {
     setInventory((items: ItemData[]) => items.filter((item: ItemData) => item.id !== id));
   };
 
+  const handleUpdateCoins = (gold: number, silver: number, copper: number) => {
+    setCoins({ gold, silver, copper });
+  };
+
   const handleUseItem = (id: string) => {
     setInventory((items: ItemData[]) => 
       items.map((item: ItemData) => {
@@ -849,6 +853,7 @@ function App() {
                     onUseItem={handleUseItem}
                     strScore={abilities.find(a => a.shortName === 'STR')?.score || 10}
                     coins={coins}
+                    onUpdateCoins={handleUpdateCoins}
                   />
                 </div>
               </div>

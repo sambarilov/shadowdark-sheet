@@ -30,6 +30,7 @@ export function EditableStatField({
             setIsEditing(false);
           }
         }}
+        onFocus={(e) => e.target.select()}
         className={`w-16 border-2 border-black p-1 ${className}`}
         autoFocus
         min={min}
