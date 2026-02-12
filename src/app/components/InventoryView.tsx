@@ -16,6 +16,7 @@ interface InventoryViewProps {
   onOpenShop: () => void;
   onAddItem: (item: ItemData) => void;
   onRemoveItem: (id: string) => void;
+  onUseItem: (id: string) => void;
   strScore: number;
   coins: {
     gold: number;
@@ -24,7 +25,7 @@ interface InventoryViewProps {
   };
 }
 
-export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onRemoveItem, strScore, coins }: InventoryViewProps) {
+export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onRemoveItem, onUseItem, strScore, coins }: InventoryViewProps) {
   const [showItemDialog, setShowItemDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<ItemData | undefined>(undefined);
 
@@ -44,7 +45,14 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
     if (item.weaponAbility) details.push(`(${item.weaponAbility})`);
     if (item.armorAC !== undefined) details.push(`AC: ${item.armorAC}`);
     if (item.shieldACBonus !== undefined) details.push(`AC +${item.shieldACBonus}`);
-    if (item.uses !== undefined) details.push(`Uses: ${item.uses}`);
+    
+    // Show currentUnits/totalUnits across all quantities
+    if (item.totalUnits !== undefined && item.currentUnits !== undefined && item.quantity !== undefined && item.totalUnits > 1) {
+      const totalCurrentUnits = (item.quantity - 1) * item.totalUnits + item.currentUnits;
+      const totalMaxUnits = item.quantity * item.totalUnits;
+      details.push(`Units: ${totalCurrentUnits}/${totalMaxUnits}`);
+    }
+    
     return details.join(' ');
   };
 
@@ -180,7 +188,7 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
               <ContextMenu key={item.id}>
                 <ContextMenuTrigger asChild>
                   <div className="border-2 border-black p-3 bg-white group cursor-pointer">
-                    <div className="flex items-start justify-between">
+                    <div className="flex justify-between items-center">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="font-black">{item.name}</span>
@@ -197,6 +205,21 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
                           <div className="text-sm text-gray-600 mt-1">{item.description}</div>
                         )}
                       </div>
+                      {item.type === 'consumable' && 
+                        item.totalUnits !== undefined && 
+                        item.currentUnits !== undefined && 
+                        item.currentUnits > 0 && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUseItem(item.id);
+                          }}
+                          size="sm"
+                          className="mt-2 bg-black text-white hover:bg-gray-800 border-2 border-black"
+                        >
+                          Use
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </ContextMenuTrigger>

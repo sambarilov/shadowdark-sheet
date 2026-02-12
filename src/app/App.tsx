@@ -9,6 +9,7 @@ import { Button } from './components/ui/button';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import spellsData from '../../assets/json/spells.json';
+import { ItemType } from './components/EditItemDialog';
 
 interface SpellData {
   source: string;
@@ -121,7 +122,9 @@ function App() {
       id: '5',
       name: 'Healing Potion',
       type: 'consumable',
-      uses: 1,
+      quantity: 1,
+      totalUnits: 1,
+      currentUnits: 1,
       equipped: false,
       description: 'Restores 2d6 HP',
       value: { gold: 50, silver: 0, copper: 0 },
@@ -289,20 +292,44 @@ function App() {
 
         // Map gear to inventory
         if (json.gear) {
-          const newInventory: ItemData[] = json.gear.map((item: any) => ({
-            id: item.instanceId || `item-${Math.random()}`,
-            name: item.name || 'Unknown Item',
-            type: item.type === 'weapon' ? 'weapon' : 'gear',
-            equipped: false,
-            description: `${item.quantity || 1}x`,
-            value: { 
-              gold: item.currency === 'gp' ? item.cost : 0,
-              silver: item.currency === 'sp' ? item.cost : 0,
-              copper: item.currency === 'cp' ? item.cost : 0
-            },
-            damage: item.type === 'weapon' ? '1d4' : undefined,
-            slots: item.slots || 1
-          }));
+          const ITEMS_PER_TYPE: Record<string, ItemType> = {
+            'Arrows': 'consumable',
+            'Crossbow bolts': 'consumable',
+            'Iron spikes': 'consumable',
+            'Rations': 'consumable',
+            'Shield': 'shield',
+            'Leather armor': 'armor',
+            'Chainmail': 'armor',
+            'Plate armor': 'armor',
+            'Mithral chainmail': 'armor',
+            'Mithral shield': 'shield',
+          }
+
+          const newInventory: ItemData[] = json.gear.map((item: any) => {
+            const itemData: ItemData = {
+              id: item.instanceId || `item-${Math.random()}`,
+              name: item.name || 'Unknown Item',
+              type: ITEMS_PER_TYPE[item.name] ?? 'gear',
+              equipped: false,
+              description: `${item.quantity || 1}x`,
+              quantity: item.quantity || 1,
+              value: { 
+                gold: item.currency === 'gp' ? item.cost : 0,
+                silver: item.currency === 'sp' ? item.cost : 0,
+                copper: item.currency === 'cp' ? item.cost : 0
+              },
+              damage: item.type === 'weapon' ? '1d4' : undefined,
+              slots: item.slots || 1
+            };
+            
+            // If item has totalUnits, set currentUnits equal to totalUnits
+            if (item.totalUnits !== undefined) {
+              itemData.totalUnits = item.totalUnits;
+              itemData.currentUnits = item.totalUnits;
+            }
+            
+            return itemData;
+          });
           setInventory(newInventory);
         }
 
@@ -408,7 +435,7 @@ function App() {
         instanceId: item.id,
         name: item.name,
         type: item.type,
-        quantity: 1,
+        quantity: item.quantity || 1,
         slots: item.slots || 1,
         cost: item.value?.gold || item.value?.silver || item.value?.copper || 0,
         currency: item.value?.gold ? 'gp' : item.value?.silver ? 'sp' : 'cp',
@@ -496,6 +523,40 @@ function App() {
 
   const handleRemoveItem = (id: string) => {
     setInventory((items: ItemData[]) => items.filter((item: ItemData) => item.id !== id));
+  };
+
+  const handleUseItem = (id: string) => {
+    setInventory((items: ItemData[]) => 
+      items.map((item: ItemData) => {
+        if (item.id === id) {
+          // New system: use totalUnits/currentUnits/quantity
+          if (item.totalUnits !== undefined && item.currentUnits !== undefined && item.quantity !== undefined) {
+            let newCurrentUnits = item.currentUnits - 1;
+            let newQuantity = item.quantity;
+            
+            // If currentUnits reaches 0, decrease quantity and reset currentUnits
+            if (newCurrentUnits <= 0) {
+              newQuantity = item.quantity - 1;
+              
+              // If quantity reaches 0, delete the item
+              if (newQuantity <= 0) {
+                toast.success(`${item.name} consumed!`);
+                return null;
+              }
+              
+              // Reset currentUnits to totalUnits for the next quantity
+              newCurrentUnits = item.totalUnits;
+            }
+            
+            // Calculate total remaining units across all quantities
+            const totalRemaining = (newQuantity - 1) * item.totalUnits + newCurrentUnits;
+            toast.success(`Used ${item.name}. ${totalRemaining} unit${totalRemaining !== 1 ? 's' : ''} remaining.`);
+            return { ...item, currentUnits: newCurrentUnits, quantity: newQuantity };
+          }
+        }
+        return item;
+      }).filter((item): item is ItemData => item !== null)
+    );
   };
 
   const handleAddTalent = (talent: Talent) => {
@@ -780,6 +841,7 @@ function App() {
                     onOpenShop={() => setShowShop(true)}
                     onAddItem={handleAddItem}
                     onRemoveItem={handleRemoveItem}
+                    onUseItem={handleUseItem}
                     strScore={abilities.find(a => a.shortName === 'STR')?.score || 10}
                     coins={coins}
                   />

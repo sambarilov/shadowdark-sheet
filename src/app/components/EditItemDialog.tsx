@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -28,7 +28,9 @@ export interface ItemData {
   // Shield specific
   shieldACBonus?: number;
   // Consumable specific
-  uses?: number;
+  quantity?: number;
+  totalUnits?: number;
+  currentUnits?: number;
 }
 
 interface EditItemDialogProps {
@@ -58,7 +60,45 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
   const [shieldACBonus, setShieldACBonus] = useState(item?.shieldACBonus || 0);
   
   // Consumable fields
-  const [uses, setUses] = useState(item?.uses || 1);
+  const [quantity, setQuantity] = useState(item?.quantity || 1);
+  const [totalUnits, setTotalUnits] = useState(item?.totalUnits || 1);
+  const [currentUnits, setCurrentUnits] = useState(item?.currentUnits || item?.totalUnits || 1);
+
+  // Update form fields when item changes
+  useEffect(() => {
+    if (item) {
+      setName(item.name);
+      setType(item.type);
+      setDescription(item.description);
+      setGold(item.value.gold);
+      setSilver(item.value.silver);
+      setCopper(item.value.copper);
+      setSlots(item.slots || 1);
+      setWeaponAbility(item.weaponAbility || 'STR');
+      setDamage(item.damage || '1d6');
+      setArmorAC(item.armorAC || 0);
+      setShieldACBonus(item.shieldACBonus || 0);
+      setQuantity(item.quantity || 1);
+      setTotalUnits(item.totalUnits || 1);
+      setCurrentUnits(item.currentUnits || item.totalUnits || 1);
+    } else {
+      // Reset form for new item
+      setName('');
+      setType('gear');
+      setDescription('');
+      setGold(0);
+      setSilver(0);
+      setCopper(0);
+      setSlots(1);
+      setWeaponAbility('STR');
+      setDamage('1d6');
+      setArmorAC(0);
+      setShieldACBonus(0);
+      setQuantity(1);
+      setTotalUnits(1);
+      setCurrentUnits(1);
+    }
+  }, [item]);
 
   const handleSave = () => {
     if (name.trim()) {
@@ -80,7 +120,9 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       } else if (type === 'shield') {
         itemData.shieldACBonus = shieldACBonus;
       } else if (type === 'consumable') {
-        itemData.uses = uses;
+        itemData.quantity = quantity;
+        itemData.totalUnits = totalUnits;
+        itemData.currentUnits = currentUnits;
       }
 
       onSave(itemData);
@@ -209,16 +251,47 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
           )}
 
           {type === 'consumable' && (
-            <div>
-              <Label className="font-black">Number of Uses</Label>
-              <Input
-                type="number"
-                value={uses}
-                onChange={(e) => setUses(parseInt(e.target.value) || 1)}
-                className="border-2 border-black mt-1"
-                min={1}
-              />
-            </div>
+            <>
+              <div>
+                <Label className="font-black">Quantity</Label>
+                <Input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  className="border-2 border-black mt-1"
+                  min={1}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="font-black">Total Units</Label>
+                  <Input
+                    type="number"
+                    value={totalUnits}
+                    onChange={(e) => {
+                      const newTotal = parseInt(e.target.value) || 1;
+                      setTotalUnits(newTotal);
+                      if (currentUnits > newTotal) {
+                        setCurrentUnits(newTotal);
+                      }
+                    }}
+                    className="border-2 border-black mt-1"
+                    min={1}
+                  />
+                </div>
+                <div>
+                  <Label className="font-black">Current Units</Label>
+                  <Input
+                    type="number"
+                    value={currentUnits}
+                    onChange={(e) => setCurrentUnits(Math.min(parseInt(e.target.value) || 1, totalUnits))}
+                    className="border-2 border-black mt-1"
+                    min={0}
+                    max={totalUnits}
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           {/* Value */}
