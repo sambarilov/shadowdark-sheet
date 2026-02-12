@@ -6,6 +6,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from './ui/context-menu';
 import type { ItemData } from './InventoryView';
 
 export interface ShopItem {
@@ -24,8 +30,9 @@ export interface ShopItem {
 interface ShopViewProps {
   onClose: () => void;
   onBuyItem: (item: ShopItem) => void;
-  onSellItem: (item: ItemData) => void;
+  onSellItem: (item: ItemData, sellPrice: { gold: number; silver: number; copper: number }) => void;
   onAddShopItem: (item: ShopItem) => void;
+  onUpdateShopItem: (item: ShopItem) => void;
   onRemoveShopItem: (id: string) => void;
   playerCoins: {
     gold: number;
@@ -34,13 +41,18 @@ interface ShopViewProps {
   };
   inventoryItems: ItemData[];
   shopItems: ShopItem[];
+  buyMarkup: number;
+  sellMarkup: number;
+  onBuyMarkupChange: (value: number) => void;
+  onSellMarkupChange: (value: number) => void;
 }
 
-export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemoveShopItem, playerCoins, inventoryItems, shopItems }: ShopViewProps) {
+export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpdateShopItem, onRemoveShopItem, playerCoins, inventoryItems, shopItems, buyMarkup, sellMarkup, onBuyMarkupChange, onSellMarkupChange }: ShopViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<ShopItem | null>(null);
   const [newItemName, setNewItemName] = useState('');
   const [newItemCategory, setNewItemCategory] = useState('Weapons');
   const [newItemDescription, setNewItemDescription] = useState('');
@@ -76,23 +88,53 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemo
     return parts.join(' ');
   };
 
+  const applyMarkup = (price: { gold: number; silver: number; copper: number }, markupPercent: number) => {
+    // Convert to copper for calculation
+    const totalCopper = (price.gold * 100) + (price.silver * 10) + price.copper;
+    const adjustedCopper = Math.floor(totalCopper * (1 + markupPercent / 100));
+    
+    // Convert back to gold/silver/copper
+    const gold = Math.floor(adjustedCopper / 100);
+    const silver = Math.floor((adjustedCopper % 100) / 10);
+    const copper = adjustedCopper % 10;
+    
+    return { gold, silver, copper };
+  };
+
   const handleCreateShopItem = () => {
     if (!newItemName.trim()) return;
 
-    const newItem: ShopItem = {
-      id: `shop-${Date.now()}-${Math.random()}`,
-      name: newItemName,
-      category: newItemCategory,
-      description: newItemDescription,
-      damage: newItemDamage || undefined,
-      price: {
-        gold: newItemGold,
-        silver: newItemSilver,
-        copper: newItemCopper
-      }
-    };
-
-    onAddShopItem(newItem);
+    if (editingItem) {
+      // Edit existing item
+      const updatedItem: ShopItem = {
+        ...editingItem,
+        name: newItemName,
+        category: newItemCategory,
+        description: newItemDescription,
+        damage: newItemDamage || undefined,
+        price: {
+          gold: newItemGold,
+          silver: newItemSilver,
+          copper: newItemCopper,
+        },
+      };
+      onUpdateShopItem(updatedItem);
+    } else {
+      // Add new item
+      const newItem: ShopItem = {
+        id: `shop-${Date.now()}-${Math.random()}`,
+        name: newItemName,
+        category: newItemCategory,
+        description: newItemDescription,
+        damage: newItemDamage || undefined,
+        price: {
+          gold: newItemGold,
+          silver: newItemSilver,
+          copper: newItemCopper
+        }
+      };
+      onAddShopItem(newItem);
+    }
     
     // Reset form
     setNewItemName('');
@@ -103,11 +145,14 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemo
     setNewItemSilver(0);
     setNewItemCopper(0);
     setShowAddDialog(false);
+    setEditingItem(null);
   };
 
   const handleExportStore = () => {
     const storeData = {
       shopItems,
+      buyMarkup,
+      sellMarkup,
       exportedAt: new Date().toISOString()
     };
 
@@ -141,6 +186,15 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemo
             // Add imported item
             onAddShopItem(item);
           });
+          
+          // Import markup values
+          if (json.buyMarkup !== undefined) {
+            onBuyMarkupChange(json.buyMarkup);
+          }
+          if (json.sellMarkup !== undefined) {
+            onSellMarkupChange(json.sellMarkup);
+          }
+          
           alert('Store imported successfully!');
         } else {
           alert('Invalid store file format.');
@@ -172,8 +226,19 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemo
         </Button>
         <h2 className="text-2xl font-black uppercase">Shop</h2>
         <div className="flex items-center gap-2">
-          {mode === 'buy' && (
+          {mode === 'buy' ? (
             <>
+              <div className="flex items-center gap-1">
+                <Label className="text-xs font-black whitespace-nowrap">Markup:</Label>
+                <Input
+                  type="number"
+                  value={buyMarkup}
+                  onChange={(e) => onBuyMarkupChange(parseInt(e.target.value) || 0)}
+                  className="w-16 h-8 text-xs border-2 border-black"
+                  placeholder="0"
+                />
+                <span className="text-xs font-black">%</span>
+              </div>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -209,6 +274,18 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemo
                 <Plus size={16} />
               </Button>
             </>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Label className="text-xs font-black whitespace-nowrap">Markup:</Label>
+              <Input
+                type="number"
+                value={sellMarkup}
+                onChange={(e) => onSellMarkupChange(parseInt(e.target.value) || 0)}
+                className="w-16 h-8 text-xs border-2 border-black"
+                placeholder="-50"
+              />
+              <span className="text-xs font-black">%</span>
+            </div>
           )}
           <div className="flex items-center gap-1 text-sm">
             <Coins size={16} />
@@ -264,28 +341,50 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemo
                   </h3>
                   <div className="space-y-2">
                     {items.map((item) => (
-                      <div key={item.id} className="border-2 border-black p-3 bg-white">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div className="font-black">{item.name}</div>
-                            {item.damage && (
-                              <div className="text-sm text-gray-600">Damage: {item.damage}</div>
-                            )}
-                            <div className="text-sm text-gray-600 mt-1">{item.description}</div>
-                            <div className="text-sm font-black mt-2">
-                              {formatPrice(item.price)}
+                      <ContextMenu key={item.id}>
+                        <ContextMenuTrigger asChild>
+                          <div className="border-2 border-black p-3 bg-white cursor-pointer">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <div className="font-black">{item.name}</div>
+                                {item.damage && (
+                                  <div className="text-sm text-gray-600">Damage: {item.damage}</div>
+                                )}
+                                <div className="text-sm text-gray-600 mt-1">{item.description}</div>
+                                <div className="text-sm font-black mt-2">
+                                  {formatPrice(applyMarkup(item.price, buyMarkup))}
+                                </div>
+                              </div>
+                              <Button
+                                onClick={() => onBuyItem({ ...item, price: applyMarkup(item.price, buyMarkup) })}
+                                size="sm"
+                                className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+                              >
+                                <ShoppingCart size={16} className="mr-1" />
+                                Buy
+                              </Button>
                             </div>
                           </div>
-                          <Button
-                            onClick={() => onBuyItem(item)}
-                            size="sm"
-                            className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-                          >
-                            <ShoppingCart size={16} className="mr-1" />
-                            Buy
-                          </Button>
-                        </div>
-                      </div>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => {
+                            setEditingItem(item);
+                            setNewItemName(item.name);
+                            setNewItemCategory(item.category);
+                            setNewItemDescription(item.description);
+                            setNewItemDamage(item.damage || '');
+                            setNewItemGold(item.price.gold);
+                            setNewItemSilver(item.price.silver);
+                            setNewItemCopper(item.price.copper);
+                            setShowAddDialog(true);
+                          }}>
+                            Edit Item
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => onRemoveShopItem(item.id)} className="text-red-600">
+                            Delete Item
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
                     ))}
                   </div>
                 </div>
@@ -298,44 +397,59 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemo
             {filteredInventoryItems.length === 0 ? (
               <p className="text-gray-500 italic text-center">No items to sell</p>
             ) : (
-              filteredInventoryItems.map((item) => (
-                <div key={item.id} className="border-2 border-black p-3 bg-white">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="font-black">{item.name}</div>
-                      {item.damage && (
-                        <div className="text-sm text-gray-600">Damage: {item.damage}</div>
-                      )}
-                      {item.description && (
-                        <div className="text-sm text-gray-600 mt-1">{item.description}</div>
-                      )}
-                      {item.equipped && (
-                        <div className="text-xs bg-black text-white inline-block px-2 py-1 mt-2">
-                          EQUIPPED
+              filteredInventoryItems.map((item) => {
+                const sellPrice = applyMarkup(item.value, sellMarkup);
+                return (
+                  <div key={item.id} className="border-2 border-black p-3 bg-white">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="font-black">{item.name}</div>
+                        {item.damage && (
+                          <div className="text-sm text-gray-600">Damage: {item.damage}</div>
+                        )}
+                        {item.description && (
+                          <div className="text-sm text-gray-600 mt-1">{item.description}</div>
+                        )}
+                        {item.equipped && (
+                          <div className="text-xs bg-black text-white inline-block px-2 py-1 mt-2">
+                            EQUIPPED
+                          </div>
+                        )}
+                        <div className="text-sm font-black mt-2">
+                          {formatPrice(sellPrice)}
                         </div>
-                      )}
+                      </div>
+                      <Button
+                      >
+                        <Coins size={16} className="mr-1" />
+                        Sell
+                      </Button>
                     </div>
-                    <Button
-                      onClick={() => onSellItem(item)}
-                      size="sm"
-                      className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-                    >
-                      <Coins size={16} className="mr-1" />
-                      Sell
-                    </Button>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
       </div>
 
       {/* Add Shop Item Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog open={showAddDialog} onOpenChange={(open) => {
+        setShowAddDialog(open);
+        if (!open) {
+          setEditingItem(null);
+          setNewItemName('');
+          setNewItemCategory('Weapons');
+          setNewItemDescription('');
+          setNewItemDamage('');
+          setNewItemGold(0);
+          setNewItemSilver(0);
+          setNewItemCopper(0);
+        }
+      }}>
         <DialogContent className="border-4 border-black">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase">Add Shop Item</DialogTitle>
+            <DialogTitle className="text-xl font-black uppercase">{editingItem ? 'Edit Shop Item' : 'Add Shop Item'}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -434,7 +548,7 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemo
               onClick={handleCreateShopItem}
               className="bg-black text-white hover:bg-gray-800 border-2 border-black"
             >
-              Add Item
+              {editingItem ? 'Save Changes' : 'Add Item'}
             </Button>
           </DialogFooter>
         </DialogContent>

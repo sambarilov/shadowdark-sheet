@@ -48,6 +48,8 @@ function App() {
   const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
   const [acBonus, setAcBonus] = useState(0);
+  const [buyMarkup, setBuyMarkup] = useState(0);
+  const [sellMarkup, setSellMarkup] = useState(-50);
   
   const [coins, setCoins] = useState({
     gold: 0,
@@ -170,9 +172,17 @@ function App() {
           setNotes(json.notes);
         }
 
-        // Map shop items
-        if (json.shopItems && Array.isArray(json.shopItems)) {
-          setShopItems(json.shopItems);
+        // Map shop data
+        if (json.shop) {
+          if (json.shop.shopItems && Array.isArray(json.shop.shopItems)) {
+            setShopItems(json.shop.shopItems);
+          }
+          if (json.shop.buyMarkup !== undefined) {
+            setBuyMarkup(json.shop.buyMarkup);
+          }
+          if (json.shop.sellMarkup !== undefined) {
+            setSellMarkup(json.shop.sellMarkup);
+          }
         }
 
         // Map talents from bonuses
@@ -433,7 +443,11 @@ function App() {
         copper: coins.copper,
         weaponBonuses,
         notes,
-        shopItems
+        shop: {
+          shopItems,
+          buyMarkup,
+          sellMarkup
+        }
       };
       
       // Create and download the JSON file
@@ -574,31 +588,30 @@ function App() {
     }
   };
 
-  const handleSellItem = (item: ItemData) => {
-    // Calculate 50% sell value
-    const halfValue = {
-      gold: Math.floor(item.value.gold / 2),
-      silver: Math.floor(item.value.silver / 2),
-      copper: Math.floor(item.value.copper / 2)
-    };
-    
+  const handleSellItem = (item: ItemData, sellPrice: { gold: number; silver: number; copper: number }) => {
+    // Use the provided sell price (already adjusted with markup)
     setCoins((prev: typeof coins) => ({
-      gold: prev.gold + halfValue.gold,
-      silver: prev.silver + halfValue.silver,
-      copper: prev.copper + halfValue.copper
+      gold: prev.gold + sellPrice.gold,
+      silver: prev.silver + sellPrice.silver,
+      copper: prev.copper + sellPrice.copper
     }));
 
     // Remove from inventory
     setInventory((items: ItemData[]) => items.filter((i: ItemData) => i.id !== item.id));
     
     toast.success(`Sold ${item.name}!`, {
-      description: `Received ${formatPrice(halfValue)}`
+      description: `Received ${formatPrice(sellPrice)}`
     });
   };
 
   const handleAddShopItem = (item: ShopItem) => {
     setShopItems([...shopItems, item]);
     toast.success(`Added ${item.name} to shop!`);
+  };
+
+  const handleUpdateShopItem = (updatedItem: ShopItem) => {
+    setShopItems(shopItems.map(item => item.id === updatedItem.id ? updatedItem : item));
+    toast.success(`Updated ${updatedItem.name}!`);
   };
 
   const handleRemoveShopItem = (id: string) => {
@@ -815,10 +828,15 @@ function App() {
               onBuyItem={handleBuyItem}
               onSellItem={handleSellItem}
               onAddShopItem={handleAddShopItem}
+              onUpdateShopItem={handleUpdateShopItem}
               onRemoveShopItem={handleRemoveShopItem}
               playerCoins={coins}
               inventoryItems={inventory}
               shopItems={shopItems}
+              buyMarkup={buyMarkup}
+              sellMarkup={sellMarkup}
+              onBuyMarkupChange={setBuyMarkup}
+              onSellMarkupChange={setSellMarkup}
             />
           </div>
         )}
