@@ -23,6 +23,7 @@ export interface ItemData {
   // Weapon specific
   weaponAbility?: string;
   damage?: string;
+  attackBonus?: number;
   // Armor specific
   armorAC?: number;
   // Shield specific
@@ -53,6 +54,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
   // Weapon fields
   const [weaponAbility, setWeaponAbility] = useState(item?.weaponAbility || 'STR');
   const [damage, setDamage] = useState(item?.damage || '1d6');
+  const [attackBonus, setAttackBonus] = useState(item?.attackBonus || 0);
   
   // Armor fields
   const [armorAC, setArmorAC] = useState(item?.armorAC || 0);
@@ -78,6 +80,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setSlots(item.slots || 1);
       setWeaponAbility(item.weaponAbility || 'STR');
       setDamage(item.damage || '1d6');
+      setAttackBonus(item.attackBonus || 0);
       setArmorAC(item.armorAC || 0);
       setShieldACBonus(item.shieldACBonus || 0);
       setQuantity(item.quantity || 1);
@@ -95,6 +98,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setSlots(1);
       setWeaponAbility('STR');
       setDamage('1d6');
+      setAttackBonus(0);
       setArmorAC(0);
       setShieldACBonus(0);
       setQuantity(1);
@@ -119,6 +123,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       if (type === 'weapon') {
         itemData.weaponAbility = weaponAbility;
         itemData.damage = damage;
+        itemData.attackBonus = attackBonus;
       } else if (type === 'armor') {
         itemData.armorAC = armorAC;
       } else if (type === 'shield') {
@@ -224,6 +229,16 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
                   onChange={(e) => setDamage(e.target.value)}
                   className="border-2 border-black mt-1"
                   placeholder="e.g., 1d8"
+                />
+              </div>
+              <div>
+                <Label className="font-black">Attack Bonus</Label>
+                <Input
+                  type="number"
+                  value={attackBonus}
+                  onChange={(e) => setAttackBonus(parseInt(e.target.value) || 0)}
+                  className="border-2 border-black mt-1"
+                  placeholder="0"
                 />
               </div>
             </>

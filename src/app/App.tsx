@@ -42,6 +42,7 @@ function App() {
   const [languages, setLanguages] = useState('Common');
   const [hp, setHp] = useState(24);
   const [maxHp, setMaxHp] = useState(32);
+  const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
   
   const [coins, setCoins] = useState({
     gold: 45,
@@ -693,7 +694,8 @@ function App() {
       name: item.name,
       damage: item.damage!,
       weaponAbility: item.weaponAbility || 'STR',
-      equipped: item.equipped
+      equipped: item.equipped,
+      attackBonus: item.attackBonus || 0
     }));
 
   // Calculate AC: base 10, overridden by best equipped armor, plus best equipped shield bonus
@@ -835,11 +837,13 @@ function App() {
                     weapons={weapons}
                     spells={spells}
                     abilities={abilities}
+                    weaponBonuses={weaponBonuses}
                     onUpdateHP={setHp}
                     onUpdateMaxHP={setMaxHp}
                     onToggleSpell={handleToggleSpell}
                     onAddSpell={handleAddSpell}
                     onRemoveSpell={handleRemoveSpell}
+                    onUpdateWeaponBonuses={setWeaponBonuses}
                   />
                 </div>
 

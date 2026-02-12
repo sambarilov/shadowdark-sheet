@@ -2,14 +2,8 @@ import { useState } from 'react';
 import { Sword, Sparkles, Dices, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { EditableStatField } from './EditableStatField';
+import { EditableAbilityField } from './EditableAbilityField';
 import { EditSpellDialog } from './EditSpellDialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -23,6 +17,7 @@ interface Weapon {
   damage: string;
   weaponAbility: string;
   equipped: boolean;
+  attackBonus?: number;
 }
 
 interface Spell {
@@ -49,14 +44,16 @@ interface PlayerViewProps {
   weapons: Weapon[];
   spells: Spell[];
   abilities: Ability[];
+  weaponBonuses: Record<string, number>;
   onUpdateHP: (hp: number) => void;
   onUpdateMaxHP: (maxHp: number) => void;
   onToggleSpell: (id: string) => void;
   onAddSpell: (spell: Spell) => void;
   onRemoveSpell: (id: string) => void;
+  onUpdateWeaponBonuses: (bonuses: Record<string, number>) => void;
 }
 
-export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdateHP, onUpdateMaxHP, onToggleSpell, onAddSpell, onRemoveSpell }: PlayerViewProps) {
+export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, weaponBonuses, onUpdateHP, onUpdateMaxHP, onToggleSpell, onAddSpell, onRemoveSpell, onUpdateWeaponBonuses }: PlayerViewProps) {
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
   const [showSpellDialog, setShowSpellDialog] = useState(false);
@@ -71,6 +68,10 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
     const selectedAbility = weaponAbilities[weapon.id] || weapon.weaponAbility;
     const ability = abilities.find(a => a.shortName === selectedAbility);
     const abilityBonus = ability?.bonus || 0;
+    
+    // Get weapon attack bonus
+    const weaponBonus = weaponBonuses[weapon.id] ?? weapon.attackBonus ?? 0;
+    const totalBonus = abilityBonus + weaponBonus;
     
     // Roll attack
     let attackRoll: number;
@@ -90,17 +91,17 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
       attackRoll = rollDice(20);
     }
     
-    const attackTotal = attackRoll + abilityBonus;
-    const attackBonusText = abilityBonus !== 0 ? ` ${abilityBonus >= 0 ? '+' : ''}${abilityBonus}` : '';
-    const attackTotalText = abilityBonus !== 0 ? ` = ${attackTotal}` : '';
+    const attackTotal = attackRoll + totalBonus;
+    const attackBonusText = totalBonus !== 0 ? ` ${totalBonus >= 0 ? '+' : ''}${totalBonus}` : '';
+    const attackTotalText = totalBonus !== 0 ? ` = ${attackTotal}` : '';
     
     // Roll damage
     const damageDieMatch = weapon.damage.match(/d(\d+)/);
     const damageDie = damageDieMatch ? parseInt(damageDieMatch[1]) : 6;
     const damageRoll = rollDice(damageDie);
-    const damageTotal = damageRoll + abilityBonus;
-    const damageBonusText = abilityBonus !== 0 ? ` ${abilityBonus >= 0 ? '+' : ''}${abilityBonus}` : '';
-    const damageTotalText = abilityBonus !== 0 ? ` = ${damageTotal}` : '';
+    const damageTotal = damageRoll + totalBonus;
+    const damageBonusText = totalBonus !== 0 ? ` ${totalBonus >= 0 ? '+' : ''}${totalBonus}` : '';
+    const damageTotalText = totalBonus !== 0 ? ` = ${damageTotal}` : '';
     
     const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
     setRollResult(`${weapon.name}${modeText}: Attack ${attackRoll}${attackRollDetails}${attackBonusText}${attackTotalText} | Damage ${damageRoll}${damageBonusText}${damageTotalText}`);
@@ -186,19 +187,19 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
                     <div className="font-black">{weapon.name}</div>
                     <div className="text-sm text-gray-600">Damage: {weapon.damage}</div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Select
+                  <div className="flex items-center gap-1">
+                    <EditableStatField
+                      value={weaponBonuses[weapon.id] ?? weapon.attackBonus ?? 0}
+                      onUpdate={(value) => onUpdateWeaponBonuses({ ...weaponBonuses, [weapon.id]: value })}
+                      className="text-s text-right w-8"
+                      min={-99}
+                    />
+                    <span>+</span>
+                    <EditableAbilityField
                       value={weaponAbilities[weapon.id] || weapon.weaponAbility}
-                      onValueChange={(value) => setWeaponAbilities({ ...weaponAbilities, [weapon.id]: value })}
-                    >
-                      <SelectTrigger className="h-8 w-20 text-xs border-2 border-black">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="STR">STR</SelectItem>
-                        <SelectItem value="DEX">DEX</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onUpdate={(value) => setWeaponAbilities({ ...weaponAbilities, [weapon.id]: value })}
+                      className="text-s"
+                    />
                   </div>
                   <ContextMenu>
                     <ContextMenuTrigger asChild>
