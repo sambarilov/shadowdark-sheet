@@ -1,7 +1,11 @@
-import { useState } from 'react';
-import { Search, ShoppingCart, ArrowLeft, Coins } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Search, ShoppingCart, ArrowLeft, Coins, Plus, Upload, Download } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Textarea } from './ui/textarea';
 import type { ItemData } from './InventoryView';
 
 export interface ShopItem {
@@ -21,127 +25,29 @@ interface ShopViewProps {
   onClose: () => void;
   onBuyItem: (item: ShopItem) => void;
   onSellItem: (item: ItemData) => void;
+  onAddShopItem: (item: ShopItem) => void;
+  onRemoveShopItem: (id: string) => void;
   playerCoins: {
     gold: number;
     silver: number;
     copper: number;
   };
   inventoryItems: ItemData[];
+  shopItems: ShopItem[];
 }
 
-export function ShopView({ onClose, onBuyItem, onSellItem, playerCoins, inventoryItems }: ShopViewProps) {
+export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onRemoveShopItem, playerCoins, inventoryItems, shopItems }: ShopViewProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [searchQuery, setSearchQuery] = useState('');
-
-  const shopItems: ShopItem[] = [
-    // Weapons
-    {
-      id: 'shop-1',
-      name: 'Longsword',
-      category: 'Weapons',
-      price: { gold: 15, silver: 0, copper: 0 },
-      damage: '1d8',
-      description: 'A versatile blade'
-    },
-    {
-      id: 'shop-2',
-      name: 'Shortsword',
-      category: 'Weapons',
-      price: { gold: 10, silver: 0, copper: 0 },
-      damage: '1d6',
-      description: 'Light and quick'
-    },
-    {
-      id: 'shop-3',
-      name: 'Dagger',
-      category: 'Weapons',
-      price: { gold: 2, silver: 0, copper: 0 },
-      damage: '1d4',
-      description: 'Small and concealable'
-    },
-    {
-      id: 'shop-4',
-      name: 'Battleaxe',
-      category: 'Weapons',
-      price: { gold: 10, silver: 0, copper: 0 },
-      damage: '1d10',
-      description: 'Heavy chopping weapon'
-    },
-    {
-      id: 'shop-5',
-      name: 'Crossbow',
-      category: 'Weapons',
-      price: { gold: 25, silver: 0, copper: 0 },
-      damage: '1d6',
-      description: 'Ranged weapon with bolts'
-    },
-    // Armor
-    {
-      id: 'shop-6',
-      name: 'Leather Armor',
-      category: 'Armor',
-      price: { gold: 5, silver: 0, copper: 0 },
-      description: 'Light protection, AC +2'
-    },
-    {
-      id: 'shop-7',
-      name: 'Chainmail',
-      category: 'Armor',
-      price: { gold: 30, silver: 0, copper: 0 },
-      description: 'Medium armor, AC +4'
-    },
-    {
-      id: 'shop-8',
-      name: 'Shield',
-      category: 'Armor',
-      price: { gold: 10, silver: 0, copper: 0 },
-      description: 'Wooden shield, AC +1'
-    },
-    // Consumables
-    {
-      id: 'shop-9',
-      name: 'Healing Potion',
-      category: 'Consumables',
-      price: { gold: 50, silver: 0, copper: 0 },
-      description: 'Restores 2d6 HP'
-    },
-    {
-      id: 'shop-10',
-      name: 'Antidote',
-      category: 'Consumables',
-      price: { gold: 25, silver: 0, copper: 0 },
-      description: 'Cures poison'
-    },
-    // Gear
-    {
-      id: 'shop-11',
-      name: 'Torch',
-      category: 'Gear',
-      price: { gold: 0, silver: 1, copper: 0 },
-      description: 'Provides light for 1 hour'
-    },
-    {
-      id: 'shop-12',
-      name: 'Rope (50ft)',
-      category: 'Gear',
-      price: { gold: 1, silver: 0, copper: 0 },
-      description: 'Sturdy hemp rope'
-    },
-    {
-      id: 'shop-13',
-      name: 'Backpack',
-      category: 'Gear',
-      price: { gold: 2, silver: 0, copper: 0 },
-      description: 'Carries your belongings'
-    },
-    {
-      id: 'shop-14',
-      name: 'Grappling Hook',
-      category: 'Gear',
-      price: { gold: 1, silver: 0, copper: 0 },
-      description: 'For climbing and securing rope'
-    }
-  ];
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState('Weapons');
+  const [newItemDescription, setNewItemDescription] = useState('');
+  const [newItemDamage, setNewItemDamage] = useState('');
+  const [newItemGold, setNewItemGold] = useState(0);
+  const [newItemSilver, setNewItemSilver] = useState(0);
+  const [newItemCopper, setNewItemCopper] = useState(0);
 
   const filteredShopItems = shopItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -170,6 +76,88 @@ export function ShopView({ onClose, onBuyItem, onSellItem, playerCoins, inventor
     return parts.join(' ');
   };
 
+  const handleCreateShopItem = () => {
+    if (!newItemName.trim()) return;
+
+    const newItem: ShopItem = {
+      id: `shop-${Date.now()}-${Math.random()}`,
+      name: newItemName,
+      category: newItemCategory,
+      description: newItemDescription,
+      damage: newItemDamage || undefined,
+      price: {
+        gold: newItemGold,
+        silver: newItemSilver,
+        copper: newItemCopper
+      }
+    };
+
+    onAddShopItem(newItem);
+    
+    // Reset form
+    setNewItemName('');
+    setNewItemCategory('Weapons');
+    setNewItemDescription('');
+    setNewItemDamage('');
+    setNewItemGold(0);
+    setNewItemSilver(0);
+    setNewItemCopper(0);
+    setShowAddDialog(false);
+  };
+
+  const handleExportStore = () => {
+    const storeData = {
+      shopItems,
+      exportedAt: new Date().toISOString()
+    };
+
+    const jsonString = JSON.stringify(storeData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `shop_items_${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportStore = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        if (json.shopItems && Array.isArray(json.shopItems)) {
+          // Clear existing shop items and replace with imported ones
+          json.shopItems.forEach((item: ShopItem) => {
+            // Remove all existing items first (done once)
+            if (json.shopItems[0] === item) {
+              shopItems.forEach(existingItem => onRemoveShopItem(existingItem.id));
+            }
+            // Add imported item
+            onAddShopItem(item);
+          });
+          alert('Store imported successfully!');
+        } else {
+          alert('Invalid store file format.');
+        }
+      } catch (error) {
+        console.error('Error importing store:', error);
+        alert('Error importing store file.');
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -183,9 +171,49 @@ export function ShopView({ onClose, onBuyItem, onSellItem, playerCoins, inventor
           <ArrowLeft size={20} />
         </Button>
         <h2 className="text-2xl font-black uppercase">Shop</h2>
-        <div className="flex items-center gap-1 text-sm">
-          <Coins size={16} />
-          <span className="font-black">{playerCoins.gold}g {playerCoins.silver}s {playerCoins.copper}c</span>
+        <div className="flex items-center gap-2">
+          {mode === 'buy' && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportStore}
+                className="hidden"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                size="sm"
+                variant="outline"
+                className="border-2 border-black"
+                title="Import Store"
+              >
+                <Upload size={16} />
+              </Button>
+              <Button
+                onClick={handleExportStore}
+                size="sm"
+                variant="outline"
+                className="border-2 border-black"
+                title="Export Store"
+              >
+                <Download size={16} />
+              </Button>
+              <Button
+                onClick={() => setShowAddDialog(true)}
+                size="sm"
+                variant="outline"
+                className="border-2 border-black"
+                title="Add Item"
+              >
+                <Plus size={16} />
+              </Button>
+            </>
+          )}
+          <div className="flex items-center gap-1 text-sm">
+            <Coins size={16} />
+            <span className="font-black">{playerCoins.gold}g {playerCoins.silver}s {playerCoins.copper}c</span>
+          </div>
         </div>
       </div>
 
@@ -302,6 +330,115 @@ export function ShopView({ onClose, onBuyItem, onSellItem, playerCoins, inventor
           </div>
         )}
       </div>
+
+      {/* Add Shop Item Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="border-4 border-black">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Add Shop Item</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label className="font-black">Name</Label>
+              <Input
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                className="border-2 border-black"
+                placeholder="Item name"
+              />
+            </div>
+
+            <div>
+              <Label className="font-black">Category</Label>
+              <Select value={newItemCategory} onValueChange={setNewItemCategory}>
+                <SelectTrigger className="border-2 border-black">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Weapons">Weapons</SelectItem>
+                  <SelectItem value="Armor">Armor</SelectItem>
+                  <SelectItem value="Consumables">Consumables</SelectItem>
+                  <SelectItem value="Gear">Gear</SelectItem>
+                  <SelectItem value="Treasure">Treasure</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="font-black">Description</Label>
+              <Textarea
+                value={newItemDescription}
+                onChange={(e) => setNewItemDescription(e.target.value)}
+                className="border-2 border-black"
+                placeholder="Item description"
+              />
+            </div>
+
+            <div>
+              <Label className="font-black">Damage (optional)</Label>
+              <Input
+                value={newItemDamage}
+                onChange={(e) => setNewItemDamage(e.target.value)}
+                className="border-2 border-black"
+                placeholder="e.g., 1d8"
+              />
+            </div>
+
+            <div>
+              <Label className="font-black">Price</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label className="text-xs">Gold</Label>
+                  <Input
+                    type="number"
+                    value={newItemGold}
+                    onChange={(e) => setNewItemGold(parseInt(e.target.value) || 0)}
+                    className="border-2 border-black"
+                    min={0}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Silver</Label>
+                  <Input
+                    type="number"
+                    value={newItemSilver}
+                    onChange={(e) => setNewItemSilver(parseInt(e.target.value) || 0)}
+                    className="border-2 border-black"
+                    min={0}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Copper</Label>
+                  <Input
+                    type="number"
+                    value={newItemCopper}
+                    onChange={(e) => setNewItemCopper(parseInt(e.target.value) || 0)}
+                    className="border-2 border-black"
+                    min={0}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={() => setShowAddDialog(false)}
+              variant="outline"
+              className="border-2 border-black"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateShopItem}
+              className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+            >
+              Add Item
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

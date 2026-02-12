@@ -41,159 +41,44 @@ function App() {
   const [luckTokenUsed, setLuckTokenUsed] = useState(false);
   const [characterImported, setCharacterImported] = useState(false);
   const [currentXP, setCurrentXP] = useState(0);
-  const [totalXP, setTotalXP] = useState(1000);
-  const [languages, setLanguages] = useState('Common');
-  const [hp, setHp] = useState(24);
-  const [maxHp, setMaxHp] = useState(32);
+  const [totalXP, setTotalXP] = useState(10);
+  const [languages, setLanguages] = useState('');
+  const [hp, setHp] = useState(0);
+  const [maxHp, setMaxHp] = useState(0);
   const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
   const [acBonus, setAcBonus] = useState(0);
   
   const [coins, setCoins] = useState({
-    gold: 45,
-    silver: 23,
-    copper: 18
+    gold: 0,
+    silver: 0,
+    copper: 0
   });
 
   const [abilities, setAbilities] = useState<Ability[]>([
     { name: 'Strength', shortName: 'STR', score: 10, bonus: 0 },
-    { name: 'Dexterity', shortName: 'DEX', score: 14, bonus: +2 },
-    { name: 'Constitution', shortName: 'CON', score: 12, bonus: +1 },
-    { name: 'Intelligence', shortName: 'INT', score: 16, bonus: +3 },
-    { name: 'Wisdom', shortName: 'WIS', score: 13, bonus: +1 },
-    { name: 'Charisma', shortName: 'CHA', score: 8, bonus: -1 }
+    { name: 'Dexterity', shortName: 'DEX', score: 10, bonus: 0 },
+    { name: 'Constitution', shortName: 'CON', score: 10, bonus: 0 },
+    { name: 'Intelligence', shortName: 'INT', score: 10, bonus: 0 },
+    { name: 'Wisdom', shortName: 'WIS', score: 10, bonus: 0 },
+    { name: 'Charisma', shortName: 'CHA', score: 10, bonus: 0 }
   ]);
 
-  const [talents, setTalents] = useState<Talent[]>([
-    {
-      id: '1',
-      name: 'Spellcasting',
-      description: 'You can cast arcane spells from your spellbook. You know 6 tier 1-2 spells.'
-    },
-    {
-      id: '2',
-      name: 'Learning Spells',
-      description: 'You can learn new spells by studying scrolls and spellbooks during downtime.'
-    },
-    {
-      id: '3',
-      name: 'Educated',
-      description: 'You are well-versed in ancient lore and history. Gain advantage on related checks.'
-    }
-  ]);
+  const [talents, setTalents] = useState<Talent[]>([]);
 
-  const [inventory, setInventory] = useState<ItemData[]>([
-    {
-      id: '1',
-      name: 'Longsword',
-      type: 'weapon',
-      weaponAbility: 'STR',
-      damage: '1d8',
-      equipped: true,
-      description: 'A versatile blade',
-      value: { gold: 15, silver: 0, copper: 0 },
-      slots: 1
-    },
-    {
-      id: '2',
-      name: 'Dagger',
-      type: 'weapon',
-      weaponAbility: 'DEX',
-      damage: '1d4',
-      equipped: false,
-      description: 'Small and quick',
-      value: { gold: 2, silver: 0, copper: 0 },
-      slots: 1
-    },
-    {
-      id: '3',
-      name: 'Leather Armor',
-      type: 'armor',
-      armorAC: 12,
-      equipped: true,
-      description: 'Light protection',
-      value: { gold: 5, silver: 0, copper: 0 },
-      slots: 1
-    },
-    {
-      id: '4',
-      name: 'Shield',
-      type: 'shield',
-      shieldACBonus: 1,
-      equipped: false,
-      description: 'Wooden shield',
-      value: { gold: 10, silver: 0, copper: 0 },
-      slots: 1
-    },
-    {
-      id: '5',
-      name: 'Healing Potion',
-      type: 'consumable',
-      quantity: 1,
-      totalUnits: 1,
-      currentUnits: 1,
-      equipped: false,
-      description: 'Restores 2d6 HP',
-      value: { gold: 50, silver: 0, copper: 0 },
-      slots: 1
-    },
-    {
-      id: '6',
-      name: 'Torch',
-      type: 'gear',
-      equipped: false,
-      description: 'Provides light for 1 hour',
-      value: { gold: 0, silver: 1, copper: 0 },
-      slots: 1
-    },
-    {
-      id: '7',
-      name: 'Rope (50ft)',
-      type: 'gear',
-      equipped: false,
-      description: 'Sturdy hemp rope',
-      value: { gold: 1, silver: 0, copper: 0 },
-      slots: 1
-    }
-  ]);
+  const [inventory, setInventory] = useState<ItemData[]>([]);
 
-  const [spells, setSpells] = useState<Spell[]>([
-    {
-      id: '1',
-      name: 'Magic Missile',
-      level: 1,
-      duration: 'Instant',
-      range: 'Far',
-      description: '3 darts of magical force, 1d4+1 damage each',
-      active: true
-    },
-    {
-      id: '2',
-      name: 'Shield',
-      level: 1,
-      duration: '1 round',
-      range: 'Self',
-      description: '+5 AC bonus until end of next turn',
-      active: true
-    },
-    {
-      id: '3',
-      name: 'Fireball',
-      level: 3,
-      duration: 'Instant',
-      range: 'Far',
-      description: '6d6 fire damage in 20-foot radius',
-      active: true
-    }
-  ]);
+  const [spells, setSpells] = useState<Spell[]>([]);
+
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
 
   const [characterAttributes, setCharacterAttributes] = useState<CharacterAttribute[]>([
-    { name: 'Name', value: 'Aldric the Wizard' },
-    { name: 'Ancestry', value: 'Human' },
-    { name: 'Class', value: 'Wizard' },
-    { name: 'Level', value: '3' },
-    { name: 'Background', value: 'Scholar' },
-    { name: 'Alignment', value: 'Lawful Good' }
+    { name: 'Name', value: '' },
+    { name: 'Ancestry', value: '' },
+    { name: 'Class', value: '' },
+    { name: 'Level', value: '1' },
+    { name: 'Background', value: '' },
+    { name: 'Alignment', value: '' }
   ]);
 
   const importCharacter = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -283,6 +168,11 @@ function App() {
         // Map notes
         if (json.notes) {
           setNotes(json.notes);
+        }
+
+        // Map shop items
+        if (json.shopItems && Array.isArray(json.shopItems)) {
+          setShopItems(json.shopItems);
         }
 
         // Map talents from bonuses
@@ -542,7 +432,8 @@ function App() {
         silver: coins.silver,
         copper: coins.copper,
         weaponBonuses,
-        notes
+        notes,
+        shopItems
       };
       
       // Create and download the JSON file
@@ -703,6 +594,16 @@ function App() {
     toast.success(`Sold ${item.name}!`, {
       description: `Received ${formatPrice(halfValue)}`
     });
+  };
+
+  const handleAddShopItem = (item: ShopItem) => {
+    setShopItems([...shopItems, item]);
+    toast.success(`Added ${item.name} to shop!`);
+  };
+
+  const handleRemoveShopItem = (id: string) => {
+    setShopItems(shopItems.filter(item => item.id !== id));
+    toast.success('Removed item from shop');
   };
 
   const handlers = useSwipeable({
@@ -913,8 +814,11 @@ function App() {
               onClose={() => setShowShop(false)}
               onBuyItem={handleBuyItem}
               onSellItem={handleSellItem}
+              onAddShopItem={handleAddShopItem}
+              onRemoveShopItem={handleRemoveShopItem}
               playerCoins={coins}
               inventoryItems={inventory}
+              shopItems={shopItems}
             />
           </div>
         )}
