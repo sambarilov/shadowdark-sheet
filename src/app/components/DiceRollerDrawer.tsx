@@ -104,16 +104,18 @@ export function DiceRollerDrawer({ open, onOpenChange, onShowResult }: DiceRolle
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="border-4 border-black">
-        <DrawerHeader>
+      <DrawerContent className="border-4 border-black max-h-[90vh] flex flex-col">
+        <DrawerHeader className="flex-shrink-0">
           <DrawerTitle className="text-2xl font-black uppercase flex items-center gap-2">
             <Dices size={24} />
             Dice Roller
           </DrawerTitle>
         </DrawerHeader>
 
-        {/* Dice Selection */}
-        <div className="px-4 pb-4">
+        {/* Scrollable content area */}
+        <div className="overflow-y-auto flex-1 min-h-0">
+          {/* Dice Selection */}
+          <div className="px-4 pb-4">
           <h3 className="text-sm font-black uppercase mb-3">Select Dice</h3>
           <div className="grid grid-cols-4 gap-2">
             {diceTypes.map(sides => (
@@ -225,8 +227,9 @@ export function DiceRollerDrawer({ open, onOpenChange, onShowResult }: DiceRolle
             </>
           )}
         </div>
+        </div>
 
-        <DrawerFooter>
+        <DrawerFooter className="flex-shrink-0">
           <Button
             onClick={rollPool}
             disabled={dicePool.length === 0}

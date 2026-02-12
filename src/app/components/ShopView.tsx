@@ -266,50 +266,33 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
         </Button>
         <h2 className="text-2xl font-black uppercase">Shop</h2>
         <div className="flex items-center gap-2">
-          {mode === 'buy' ? (
-            <>
-              <div className="flex items-center gap-1">
-                <Label className="text-xs font-black whitespace-nowrap">Markup:</Label>
-                <Input
-                  type="number"
-                  value={buyMarkup}
-                  onChange={(e) => onBuyMarkupChange(parseInt(e.target.value) || 0)}
-                  className="w-16 h-8 text-xs border-2 border-black"
-                  placeholder="0"
-                />
-                <span className="text-xs font-black">%</span>
-              </div>
-              <Button
-                onClick={() => setShowImportDialog(true)}
-                size="sm"
-                variant="outline"
-                className="border-2 border-black"
-                title="Import Store"
-              >
-                <Upload size={16} />
-              </Button>
-              <Button
-                onClick={handleExportStore}
-                size="sm"
-                variant="outline"
-                className="border-2 border-black"
-                title="Export Store"
-              >
-                <Download size={16} />
-              </Button>
-              <Button
-                onClick={() => setShowAddDialog(true)}
-                size="sm"
-                variant="outline"
-                className="border-2 border-black"
-                title="Add Item"
-              >
-                <Plus size={16} />
-              </Button>
-            </>
-          ) : (
-            <></>  
-          )}
+          <Button
+            onClick={() => setShowImportDialog(true)}
+            size="sm"
+            variant="outline"
+            className="border-2 border-black"
+            title="Import Store"
+          >
+            <Upload size={16} />
+          </Button>
+          <Button
+            onClick={handleExportStore}
+            size="sm"
+            variant="outline"
+            className="border-2 border-black"
+            title="Export Store"
+          >
+            <Download size={16} />
+          </Button>
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            size="sm"
+            variant="outline"
+            className="border-2 border-black"
+            title="Add Item"
+          >
+            <Plus size={16} />
+          </Button>
         </div>
       </div>
       <div className="flex justify-between gap-4 mb-4">

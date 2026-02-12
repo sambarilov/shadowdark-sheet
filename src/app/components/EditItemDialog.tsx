@@ -117,7 +117,8 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         description: description.trim(),
         equipped: item?.equipped || false,
         value: { gold, silver, copper },
-        slots
+        slots,
+        quantity,
       };
 
       if (type === 'weapon') {
@@ -129,10 +130,9 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       } else if (type === 'shield') {
         itemData.shieldACBonus = shieldACBonus;
       } else if (type === 'consumable') {
-        itemData.quantity = quantity;
         itemData.totalUnits = totalUnits;
         itemData.currentUnits = currentUnits;
-        itemData.unitsPerSlot = totalUnits / slots;
+        itemData.unitsPerSlot = unitsPerSlot;
       }
 
       onSave(itemData);
@@ -144,6 +144,16 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         setGold(0);
         setSilver(0);
         setCopper(0);
+        setSlots(1);
+        setWeaponAbility('STR');
+        setDamage('1d6');
+        setAttackBonus(0);
+        setArmorAC(0);
+        setShieldACBonus(0);
+        setQuantity(1);
+        setTotalUnits(1);
+        setCurrentUnits(1);
+        setUnitsPerSlot(1);
       }
     }
   };

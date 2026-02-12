@@ -250,7 +250,7 @@ export function CharacterAttributesView({
         >
           <Sparkles size={20} className="mr-2" />
           <span className="font-black uppercase text-xs">
-            Luck Token {luckTokenUsed ? '(Used)' : '(Available)'}
+            Luck Token
           </span>
         </Button>
       </div>
