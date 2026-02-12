@@ -16,6 +16,7 @@ interface InventoryViewProps {
   onToggleEquipped: (id: string) => void;
   onOpenShop: () => void;
   onAddItem: (item: ItemData) => void;
+  onUpdateItem: (item: ItemData) => void;
   onRemoveItem: (id: string) => void;
   onUseItem: (id: string) => void;
   strScore: number;
@@ -27,7 +28,7 @@ interface InventoryViewProps {
   onUpdateCoins: (gold: number, silver: number, copper: number) => void;
 }
 
-export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onRemoveItem, onUseItem, strScore, coins, onUpdateCoins }: InventoryViewProps) {
+export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onUpdateItem, onRemoveItem, onUseItem, strScore, coins, onUpdateCoins }: InventoryViewProps) {
   const [showItemDialog, setShowItemDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<ItemData | undefined>(undefined);
 
@@ -266,7 +267,11 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
           setEditingItem(undefined);
         }}
         onSave={(item) => {
-          onAddItem(item);
+          if (editingItem) {
+            onUpdateItem(item);
+          } else {
+            onAddItem(item);
+          }
           setShowItemDialog(false);
           setEditingItem(undefined);
         }}

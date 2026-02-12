@@ -14,6 +14,46 @@ import { toast } from 'sonner';
 import spellsData from '../../assets/json/spells.json';
 import { ItemType } from './components/EditItemDialog';
 
+// Weapon stats lookup database
+const WEAPON_STATS: Record<string, { damage: string; weaponAbility?: string; attackBonus?: number }> = {
+  'Dagger': { damage: '1d4', weaponAbility: 'STR' },
+  'Dagger (obsidian)': { damage: '1d4', weaponAbility: 'STR' },
+  'Shortsword': { damage: '1d6', weaponAbility: 'STR' },
+  'Longsword': { damage: '1d8', weaponAbility: 'STR' },
+  'Greatsword': { damage: '1d12', weaponAbility: 'STR' },
+  'Mace': { damage: '1d6', weaponAbility: 'STR' },
+  'Warhammer': { damage: '1d10', weaponAbility: 'STR' },
+  'Spear': { damage: '1d6', weaponAbility: 'STR' },
+  'Staff': { damage: '1d6', weaponAbility: 'STR' },
+  'Javelin': { damage: '1d6', weaponAbility: 'STR' },
+  'Club': { damage: '1d4', weaponAbility: 'STR' },
+  'Crossbow': { damage: '1d6', weaponAbility: 'DEX' },
+  'Longbow': { damage: '1d8', weaponAbility: 'DEX' },
+  'Shortbow': { damage: '1d6', weaponAbility: 'DEX' },
+};
+
+// Armor stats lookup database (AC values)
+const ARMOR_STATS: Record<string, { armorAC: number }> = {
+  'Leather armor': { armorAC: 11 },
+  'Studded leather': { armorAC: 12 },
+  'Chainmail': { armorAC: 14 },
+  'Chain mail': { armorAC: 14 },
+  'Plate armor': { armorAC: 16 },
+  'Plate mail': { armorAC: 16 },
+  'Mithral chainmail': { armorAC: 15 },
+  'Mithral chain mail': { armorAC: 15 },
+  'Half plate': { armorAC: 15 },
+  'Scale mail': { armorAC: 13 },
+};
+
+// Shield stats lookup database (AC bonus)
+const SHIELD_STATS: Record<string, { shieldACBonus: number }> = {
+  'Shield': { shieldACBonus: 2 },
+  'Wooden shield': { shieldACBonus: 2 },
+  'Mithral shield': { shieldACBonus: 2 },
+  'Tower shield': { shieldACBonus: 3 },
+};
+
 interface SpellData {
   source: string;
   name: string;
@@ -411,13 +451,46 @@ function App() {
             silver: item.currency === 'sp' ? item.cost : 0,
             copper: item.currency === 'cp' ? item.cost : 0
           },
-          damage: item.damage || undefined,
-          attackBonus: item.attackBonus || undefined,
-          weaponAbility: item.weaponAbility || undefined,
-          armorAC: item.armorAC || undefined,
-          shieldACBonus: item.shieldACBonus || undefined,
           slots: item.slots || 1
         };
+
+        // Look up weapon stats if this is a weapon
+        if (itemType(item) === 'weapon') {
+          const weaponStats = WEAPON_STATS[item.name];
+          if (weaponStats) {
+            itemData.damage = weaponStats.damage;
+            itemData.weaponAbility = weaponStats.weaponAbility || 'STR';
+            itemData.attackBonus = weaponStats.attackBonus || 0;
+          } else {
+            // Default values for unknown weapons
+            itemData.damage = item.damage || '1d6';
+            itemData.weaponAbility = item.weaponAbility || 'STR';
+            itemData.attackBonus = item.attackBonus || 0;
+          }
+        } else if (itemType(item) === 'armor') {
+          // Look up armor stats
+          const armorStats = ARMOR_STATS[item.name];
+          if (armorStats) {
+            itemData.armorAC = armorStats.armorAC;
+          } else {
+            itemData.armorAC = item.armorAC || undefined;
+          }
+        } else if (itemType(item) === 'shield') {
+          // Look up shield stats
+          const shieldStats = SHIELD_STATS[item.name];
+          if (shieldStats) {
+            itemData.shieldACBonus = shieldStats.shieldACBonus;
+          } else {
+            itemData.shieldACBonus = item.shieldACBonus || undefined;
+          }
+        } else {
+          // Non-weapon/armor/shield items can still have these if provided
+          itemData.damage = item.damage || undefined;
+          itemData.attackBonus = item.attackBonus || undefined;
+          itemData.weaponAbility = item.weaponAbility || undefined;
+          itemData.armorAC = item.armorAC || undefined;
+          itemData.shieldACBonus = item.shieldACBonus || undefined;
+        }
 
         if (item.totalUnits !== undefined) {
           itemData.totalUnits = item.totalUnits;
@@ -506,6 +579,12 @@ function App() {
 
   const handleAddItem = (item: ItemData) => {
     setInventory((items: ItemData[]) => [...items, item]);
+  };
+
+  const handleUpdateItem = (item: ItemData) => {
+    setInventory((items: ItemData[]) =>
+      items.map((i: ItemData) => (i.id === item.id ? item : i))
+    );
   };
 
   const handleRemoveItem = (id: string) => {
@@ -810,6 +889,7 @@ function App() {
                     onToggleEquipped={handleToggleEquipped}
                     onOpenShop={() => setShowShop(true)}
                     onAddItem={handleAddItem}
+                    onUpdateItem={handleUpdateItem}
                     onRemoveItem={handleRemoveItem}
                     onUseItem={handleUseItem}
                     strScore={abilities.find(a => a.shortName === 'STR')?.score || 10}
