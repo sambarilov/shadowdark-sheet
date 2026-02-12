@@ -135,7 +135,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       } else if (type === 'shield') {
         itemData.shieldACBonus = shieldACBonus;
       } else if (type === 'consumable') {
-        itemData.totalUnits = totalUnits;
+        itemData.totalUnits = unitsPerSlot * quantity;
         itemData.currentUnits = currentUnits;
         itemData.unitsPerSlot = unitsPerSlot;
       }
@@ -309,13 +309,14 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="font-black">Total Units</Label>
+                  <Label className="font-black">Units Per Slot</Label>
                   <Input
                     type="number"
-                    value={totalUnits}
+                    value={unitsPerSlot}
                     onChange={(e) => {
                       const newTotal = parseInt(e.target.value) || 1;
-                      setTotalUnits(newTotal);
+                      setUnitsPerSlot(newTotal);
+                      setTotalUnits(newTotal * quantity);
                       if (currentUnits > newTotal) {
                         setCurrentUnits(newTotal);
                       }

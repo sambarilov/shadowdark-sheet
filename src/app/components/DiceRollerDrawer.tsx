@@ -81,12 +81,12 @@ export function DiceRollerDrawer({ open, onOpenChange, onShowResult }: DiceRolle
     const finalTotal = diceTotal + bonus;
     
     const detailsText = results.map(r => {
-      const rollInfo = r.rollDetails ? `${r.rollDetails} = ${r.result}` : `${r.result}`;
+      const rollInfo = r.rollDetails ? `${r.rollDetails}` : `${r.result}`;
       return `d${r.sides}:${rollInfo}`;
     }).join(' + ');
     
     const bonusText = bonus !== 0 ? ` ${bonus >= 0 ? '+' : ''}${bonus}` : '';
-    const totalText = bonus !== 0 ? ` = ${finalTotal}` : diceTotal !== finalTotal ? ` = ${finalTotal}` : '';
+    const totalText = ` = ${finalTotal}`;
     
     // Show result as floating message and close drawer
     onShowResult(`${modeText}${modeText ? ': ' : ''}${detailsText}${bonusText}${totalText}`);
