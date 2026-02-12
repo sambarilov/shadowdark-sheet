@@ -505,7 +505,7 @@ function App() {
     }
 
     // Map spells
-    if (json.spellsKnown && typeof json.spellsKnown === 'string') {
+    if (json.spellsKnown && typeof json.spellsKnown === 'string' && json.spellsKnown.trim() !== 'None') {
       const spellNames = json.spellsKnown.split(',').map((s: string) => s.trim()).filter((s: string) => s);
       const spellsDatabase: SpellData[] = spellsData as SpellData[];
       
