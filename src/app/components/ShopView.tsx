@@ -226,72 +226,72 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
         </Button>
         <h2 className="text-2xl font-black uppercase">Shop</h2>
         <div className="flex items-center gap-2">
-          {mode === 'buy' ? (
-            <>
-              <div className="flex items-center gap-1">
-                <Label className="text-xs font-black whitespace-nowrap">Markup:</Label>
-                <Input
-                  type="number"
-                  value={buyMarkup}
-                  onChange={(e) => onBuyMarkupChange(parseInt(e.target.value) || 0)}
-                  className="w-16 h-8 text-xs border-2 border-black"
-                  placeholder="0"
-                />
-                <span className="text-xs font-black">%</span>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleImportStore}
-                className="hidden"
-              />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                size="sm"
-                variant="outline"
-                className="border-2 border-black"
-                title="Import Store"
-              >
-                <Upload size={16} />
-              </Button>
-              <Button
-                onClick={handleExportStore}
-                size="sm"
-                variant="outline"
-                className="border-2 border-black"
-                title="Export Store"
-              >
-                <Download size={16} />
-              </Button>
-              <Button
-                onClick={() => setShowAddDialog(true)}
-                size="sm"
-                variant="outline"
-                className="border-2 border-black"
-                title="Add Item"
-              >
-                <Plus size={16} />
-              </Button>
-            </>
-          ) : (
-            <div className="flex items-center gap-1">
-              <Label className="text-xs font-black whitespace-nowrap">Markup:</Label>
-              <Input
-                type="number"
-                value={sellMarkup}
-                onChange={(e) => onSellMarkupChange(parseInt(e.target.value) || 0)}
-                className="w-16 h-8 text-xs border-2 border-black"
-                placeholder="-50"
-              />
-              <span className="text-xs font-black">%</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1 text-sm">
-            <Coins size={16} />
-            <span className="font-black">{playerCoins.gold}g {playerCoins.silver}s {playerCoins.copper}c</span>
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleImportStore}
+            className="hidden"
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            size="sm"
+            variant="outline"
+            className="border-2 border-black"
+            title="Import Store"
+          >
+            <Upload size={16} />
+          </Button>
+          <Button
+            onClick={handleExportStore}
+            size="sm"
+            variant="outline"
+            className="border-2 border-black"
+            title="Export Store"
+          >
+            <Download size={16} />
+          </Button>
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            size="sm"
+            variant="outline"
+            className="border-2 border-black"
+            title="Add Item"
+          >
+            <Plus size={16} />
+          </Button>
         </div>
+      </div>
+      <div className="flex justify-between gap-4 mb-4">
+        <div className="flex items-center gap-1 text-sm">
+          <Coins size={16} />
+          <span className="font-black">{playerCoins.gold}g {playerCoins.silver}s {playerCoins.copper}c</span>
+        </div>
+        {mode === 'buy' ? (
+          <div className="flex items-center gap-1">
+            <Label className="text-xs font-black whitespace-nowrap">Markup:</Label>
+            <Input
+              type="number"
+              value={buyMarkup}
+              onChange={(e) => onBuyMarkupChange(parseInt(e.target.value) || 0)}
+              className="w-16 h-8 text-xs border-2 border-black"
+              placeholder="0"
+            />
+            <span className="text-xs font-black">%</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <Label className="text-xs font-black whitespace-nowrap">Markup:</Label>
+            <Input
+              type="number"
+              value={sellMarkup}
+              onChange={(e) => onSellMarkupChange(parseInt(e.target.value) || 0)}
+              className="w-16 h-8 text-xs border-2 border-black"
+              placeholder="-50"
+            />
+            <span className="text-xs font-black">%</span>
+          </div>
+        )}
       </div>
 
       {/* Buy/Sell Tabs */}
@@ -420,6 +420,9 @@ export function ShopView({ onClose, onBuyItem, onSellItem, onAddShopItem, onUpda
                         </div>
                       </div>
                       <Button
+                        onClick={() => onSellItem(item, sellPrice)}
+                        size="sm"
+                        className="bg-black text-white hover:bg-gray-800 border-2 border-black"
                       >
                         <Coins size={16} className="mr-1" />
                         Sell
