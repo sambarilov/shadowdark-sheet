@@ -4,7 +4,7 @@ import { PlayerView } from './components/PlayerView';
 import { InventoryView, type ItemData } from './components/InventoryView';
 import { CharacterAttributesView, type CharacterAttribute, type Talent, type Ability } from './components/CharacterAttributesView';
 import { ShopView, type ShopItem } from './components/ShopView';
-import { Upload } from 'lucide-react';
+import { Upload, Download } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
@@ -32,6 +32,9 @@ function App() {
   const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('player');
   const [showShop, setShowShop] = useState(false);
   const [luckTokenUsed, setLuckTokenUsed] = useState(false);
+  const [characterImported, setCharacterImported] = useState(false);
+  const [currentXP, setCurrentXP] = useState(0);
+  const [totalXP, setTotalXP] = useState(1000);
   const [hp, setHp] = useState(24);
   const [maxHp, setMaxHp] = useState(32);
   
@@ -220,6 +223,19 @@ function App() {
           setHp(json.maxHitPoints); // Start at max
         }
 
+        // Map XP
+        if (json.XP !== undefined) {
+          setCurrentXP(json.XP);
+        }
+        if (json.totalXP !== undefined) {
+          setTotalXP(json.totalXP);
+        } else {
+          // Calculate total XP based on level if not provided
+          const level = json.level || 1;
+          const xpForLevel = level * 10; // Simple calculation
+          setTotalXP(xpForLevel);
+        }
+
         // Map coins
         setCoins({
           gold: json.gold || 0,
@@ -312,6 +328,7 @@ function App() {
           }
         }
 
+        setCharacterImported(true);
         alert('Character imported successfully!');
       } catch (error) {
         console.error('Error importing character:', error);
@@ -323,6 +340,127 @@ function App() {
     // Reset the input so the same file can be imported again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const exportCharacter = () => {
+    try {
+      // Get character name
+      const characterName = characterAttributes.find(attr => attr.name === 'Name')?.value || 'Character';
+      
+      // Build stats object
+      const stats: Record<string, number> = {};
+      abilities.forEach(ability => {
+        stats[ability.shortName] = ability.score;
+      });
+      
+      // Build bonuses array from talents
+      const bonuses = talents.map((talent) => {
+        // Try to parse the description back to bonus format
+        const parts = talent.description.split(' | ');
+        const bonus: any = {
+          name: talent.name,
+          bonusName: talent.name.replace(/\s+/g, '')
+        };
+        
+        parts.forEach(part => {
+          if (part.startsWith('Class:') || part.startsWith('Ancestry:')) {
+            const [sourceType, sourceName] = part.split(': ');
+            bonus.sourceType = sourceType;
+            bonus.sourceName = sourceName;
+            bonus.sourceCategory = 'Ability';
+          } else if (part.startsWith('Bonus to:')) {
+            bonus.bonusTo = part.replace('Bonus to: ', '');
+          } else if (part.startsWith('Level ')) {
+            bonus.gainedAtLevel = parseInt(part.replace('Level ', '')) || 1;
+          } else if (part.startsWith('+')) {
+            bonus.bonusAmount = parseInt(part.replace('+', '')) || 0;
+          }
+        });
+        
+        if (!bonus.gainedAtLevel) bonus.gainedAtLevel = 1;
+        if (!bonus.sourceType) bonus.sourceType = 'Other';
+        if (!bonus.sourceName) bonus.sourceName = 'Unknown';
+        
+        return bonus;
+      });
+      
+      // Build gear array from inventory
+      const gear = inventory.map(item => ({
+        instanceId: item.id,
+        name: item.name,
+        type: item.type,
+        quantity: 1,
+        slots: item.slots || 1,
+        cost: item.value?.gold || item.value?.silver || item.value?.copper || 0,
+        currency: item.value?.gold ? 'gp' : item.value?.silver ? 'sp' : 'cp',
+        equipped: item.equipped || false,
+        damage: item.damage || undefined,
+        weaponAbility: item.weaponAbility || undefined,
+        armorAC: item.armorAC || undefined
+      }));
+      
+      // Build spellsKnown string
+      const spellsKnown = spells.map(s => s.name).join(', ');
+      
+      // Calculate gear slots
+      const strScore = abilities.find(a => a.shortName === 'STR')?.score || 10;
+      const gearSlotsTotal = Math.max(strScore, 10);
+      const gearSlotsUsed = inventory.reduce((sum, item) => sum + (item.slots || 0), 0);
+      
+      // Build the export object
+      const exportData = {
+        name: characterName,
+        stats,
+        rolledStats: { ...stats },
+        ancestry: characterAttributes.find(attr => attr.name === 'Ancestry')?.value || 'Unknown',
+        class: characterAttributes.find(attr => attr.name === 'Class')?.value || 'Unknown',
+        level: parseInt(characterAttributes.find(attr => attr.name === 'Level')?.value || '1'),
+        levels: [], // Empty for now, could be populated if tracking level history
+        XP: currentXP,
+        totalXP: totalXP,
+        ambitionTalentLevel: {
+          level: 1,
+          talentRolledDesc: '',
+          talentRolledName: '',
+          Rolled12TalentOrTwoStatPoints: '',
+          Rolled12ChosenTalentDesc: '',
+          Rolled12ChosenTalentName: '',
+          HitPointRoll: 0,
+          stoutHitPointRoll: 0
+        },
+        title: '',
+        alignment: characterAttributes.find(attr => attr.name === 'Alignment')?.value || 'Neutral',
+        background: characterAttributes.find(attr => attr.name === 'Background')?.value || 'Unknown',
+        deity: '',
+        maxHitPoints: maxHp,
+        armorClass: calculatedAC,
+        gearSlotsTotal,
+        gearSlotsUsed,
+        bonuses,
+        gear,
+        spellsKnown,
+        gold: coins.gold,
+        silver: coins.silver,
+        copper: coins.copper
+      };
+      
+      // Create and download the JSON file
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${characterName.replace(/\s+/g, '_')}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Character exported successfully!');
+    } catch (error) {
+      console.error('Error exporting character:', error);
+      toast.error('Error exporting character');
     }
   };
 
@@ -487,7 +625,7 @@ function App() {
 
         {!showShop && (
           <>
-            {/* Import Button */}
+            {/* Import/Export Button */}
             <div className="border-b-2 border-black p-2 bg-white relative z-10">
               <input
                 ref={fileInputRef}
@@ -497,13 +635,22 @@ function App() {
                 className="hidden"
               />
               <Button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => characterImported ? exportCharacter() : fileInputRef.current?.click()}
                 variant="outline"
                 size="sm"
                 className="w-full flex items-center justify-center gap-2"
               >
-                <Upload size={16} />
-                Import Character JSON
+                {characterImported ? (
+                  <>
+                    <Download size={16} />
+                    Export Character JSON
+                  </>
+                ) : (
+                  <>
+                    <Upload size={16} />
+                    Import Character JSON
+                  </>
+                )}
               </Button>
             </div>
 
@@ -557,7 +704,13 @@ function App() {
                     abilities={abilities}
                     talents={talents}
                     luckTokenUsed={luckTokenUsed}
+                    currentXP={currentXP}
+                    totalXP={totalXP}
                     onToggleLuckToken={() => setLuckTokenUsed(!luckTokenUsed)}
+                    onUpdateXP={(current, total) => {
+                      setCurrentXP(current);
+                      setTotalXP(total);
+                    }}
                     onUpdateAbilities={setAbilities}
                     onAddTalent={handleAddTalent}
                     onRemoveTalent={handleRemoveTalent}

@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Sword, Sparkles, Dices, Edit } from 'lucide-react';
+import { useState } from 'react';
+import { Sword, Sparkles, Dices } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -53,8 +53,6 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [editingHP, setEditingHP] = useState(false);
   const [editingMaxHP, setEditingMaxHP] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const [contextTarget, setContextTarget] = useState<{ weapon?: Weapon; spell?: Spell } | null>(null);
   const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
 
   const rollDice = (sides: number) => {
