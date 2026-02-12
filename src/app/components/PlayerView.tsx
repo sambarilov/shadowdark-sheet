@@ -134,7 +134,7 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
     <div className="h-full flex flex-col">
       {/* Header Stats */}
       <div className="flex gap-4 mb-6">
-        <div className="flex-1 border-4 border-black p-4 bg-white">
+        <div className="flex-1 border-4 border-black p-4 bg-white flex flex-col items-center justify-center">
           <div className="text-xs uppercase tracking-wider mb-1">Hit Points</div>
           <div className="flex items-center gap-2">
             <EditableStatField
@@ -152,7 +152,7 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
             />
           </div>
         </div>
-        <div className="flex-1 border-4 border-black p-4 bg-white">
+        <div className="flex-1 border-4 border-black p-4 bg-white flex flex-col items-center justify-center">
           <div className="text-xs uppercase tracking-wider mb-1">Armor Class</div>
           <div className="text-3xl font-black">{ac}</div>
         </div>

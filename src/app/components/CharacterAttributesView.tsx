@@ -209,10 +209,10 @@ export function CharacterAttributesView({
           <Button
             onClick={() => setShowTalentDialog(true)}
             size="sm"
-            className="bg-black text-white border-2 border-black"
+            variant="outline"
+            className="border-2 border-black"
           >
-            <Plus size={16} className="mr-1" />
-            Add
+            <Plus size={16} />
           </Button>
         </div>
         <div className="space-y-2">
