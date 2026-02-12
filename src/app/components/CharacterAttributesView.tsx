@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Star, Dices, Sparkles, Plus, Trash2, Edit } from 'lucide-react';
+import { User, Star, Dices, Sparkles, Plus, Edit } from 'lucide-react';
 import { Button } from './ui/button';
 import { EditableStatField } from './EditableStatField';
 import { EditAbilitiesDialog } from './EditAbilitiesDialog';
@@ -59,6 +59,7 @@ export function CharacterAttributesView({
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [showAbilitiesDialog, setShowAbilitiesDialog] = useState(false);
   const [showTalentDialog, setShowTalentDialog] = useState(false);
+  const [editingTalent, setEditingTalent] = useState<Talent | undefined>(undefined);
 
   const rollDice = (sides: number) => {
     return Math.floor(Math.random() * sides) + 1;
@@ -219,22 +220,29 @@ export function CharacterAttributesView({
             <p className="text-gray-500 italic">No talents</p>
           ) : (
             talents.map((talent) => (
-              <div key={talent.id} className="border-2 border-black p-3 bg-white group">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="font-black mb-1">{talent.name}</div>
-                    <p className="text-sm text-gray-600">{talent.description}</p>
+              <ContextMenu key={talent.id}>
+                <ContextMenuTrigger asChild>
+                  <div className="border-2 border-black p-3 bg-white group cursor-pointer">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="font-black mb-1">{talent.name}</div>
+                        <p className="text-sm text-gray-600">{talent.description}</p>
+                      </div>
+                    </div>
                   </div>
-                  <Button
-                    onClick={() => onRemoveTalent(talent.id)}
-                    size="sm"
-                    variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                  >
-                    <Trash2 size={16} className="text-red-600" />
-                  </Button>
-                </div>
-              </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => {
+                    setEditingTalent(talent);
+                    setShowTalentDialog(true);
+                  }}>
+                    Edit Talent
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => onRemoveTalent(talent.id)} className="text-red-600">
+                    Delete Talent
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))
           )}
         </div>
@@ -249,8 +257,16 @@ export function CharacterAttributesView({
 
       <EditTalentDialog
         open={showTalentDialog}
-        onClose={() => setShowTalentDialog(false)}
-        onSave={onAddTalent}
+        talent={editingTalent}
+        onClose={() => {
+          setShowTalentDialog(false);
+          setEditingTalent(undefined);
+        }}
+        onSave={(talent) => {
+          onAddTalent(talent);
+          setShowTalentDialog(false);
+          setEditingTalent(undefined);
+        }}
       />
     </div>
   );

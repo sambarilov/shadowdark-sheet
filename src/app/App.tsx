@@ -25,6 +25,7 @@ interface Spell {
   name: string;
   level: number;
   description: string;
+  active: boolean;
 }
 
 function App() {
@@ -149,19 +150,22 @@ function App() {
       id: '1',
       name: 'Magic Missile',
       level: 1,
-      description: '3 darts of magical force, 1d4+1 damage each'
+      description: '3 darts of magical force, 1d4+1 damage each',
+      active: true
     },
     {
       id: '2',
       name: 'Shield',
       level: 1,
-      description: '+5 AC bonus until end of next turn'
+      description: '+5 AC bonus until end of next turn',
+      active: true
     },
     {
       id: '3',
       name: 'Fireball',
       level: 3,
-      description: '6d6 fire damage in 20-foot radius'
+      description: '6d6 fire damage in 20-foot radius',
+      active: true
     }
   ]);
 
@@ -310,7 +314,8 @@ function App() {
                 id: `spell-${index}`,
                 name: spellData.name,
                 level: spellData.tier,
-                description: `${spellData.range} | ${spellData.duration} | ${spellData.description}`
+                description: `${spellData.range} | ${spellData.duration} | ${spellData.description}`,
+                active: true
               });
             } else {
               // If spell not found in database, add it with basic info
@@ -318,7 +323,8 @@ function App() {
                 id: `spell-${index}`,
                 name: spellName,
                 level: 1,
-                description: 'Details not available'
+                description: 'Details not available',
+                active: true
               });
             }
           });
@@ -487,7 +493,21 @@ function App() {
   const handleRemoveTalent = (id: string) => {
     setTalents((talents: Talent[]) => talents.filter((talent: Talent) => talent.id !== id));
   };
+  const handleToggleSpell = (id: string) => {
+    setSpells((spells: Spell[]) =>
+      spells.map((spell: Spell) =>
+        spell.id === id ? { ...spell, active: !spell.active } : spell
+      )
+    );
+  };
 
+  const handleAddSpell = (spell: Spell) => {
+    setSpells((spells: Spell[]) => [...spells, spell]);
+  };
+
+  const handleRemoveSpell = (id: string) => {
+    setSpells((spells: Spell[]) => spells.filter((spell: Spell) => spell.id !== id));
+  };
   const formatPrice = (price: { gold: number; silver: number; copper: number }) => {
     const parts = [];
     if (price.gold > 0) parts.push(`${price.gold}g`);
@@ -731,6 +751,9 @@ function App() {
                     abilities={abilities}
                     onUpdateHP={setHp}
                     onUpdateMaxHP={setMaxHp}
+                    onToggleSpell={handleToggleSpell}
+                    onAddSpell={handleAddSpell}
+                    onRemoveSpell={handleRemoveSpell}
                   />
                 </div>
 

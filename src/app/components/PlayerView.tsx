@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Sword, Sparkles, Dices } from 'lucide-react';
+import { Sword, Sparkles, Dices, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { EditableStatField } from './EditableStatField';
+import { EditSpellDialog } from './EditSpellDialog';
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ interface Spell {
   name: string;
   level: number;
   description: string;
+  active: boolean;
 }
 
 interface Ability {
@@ -47,11 +49,16 @@ interface PlayerViewProps {
   abilities: Ability[];
   onUpdateHP: (hp: number) => void;
   onUpdateMaxHP: (maxHp: number) => void;
+  onToggleSpell: (id: string) => void;
+  onAddSpell: (spell: Spell) => void;
+  onRemoveSpell: (id: string) => void;
 }
 
-export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdateHP, onUpdateMaxHP }: PlayerViewProps) {
+export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdateHP, onUpdateMaxHP, onToggleSpell, onAddSpell, onRemoveSpell }: PlayerViewProps) {
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
+  const [showSpellDialog, setShowSpellDialog] = useState(false);
+  const [editingSpell, setEditingSpell] = useState<Spell | undefined>(undefined);
 
   const rollDice = (sides: number) => {
     return Math.floor(Math.random() * sides) + 1;
@@ -220,50 +227,105 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
 
       {/* Spells Section */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles size={20} />
-          <h2 className="text-xl font-black uppercase">Spells</h2>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={20} />
+            <h2 className="text-xl font-black uppercase">Spells</h2>
+          </div>
+          <Button
+            onClick={() => setShowSpellDialog(true)}
+            size="sm"
+            variant="outline"
+            className="border-2 border-black"
+          >
+            <Plus size={16} />
+          </Button>
         </div>
         <div className="space-y-2">
           {spells.length === 0 ? (
             <p className="text-gray-500 italic">No spells available</p>
           ) : (
             spells.map((spell) => (
-              <div key={spell.id} className="border-2 border-black p-3 bg-white">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <span className="font-black">{spell.name}</span>
-                    <span className="ml-2 text-xs bg-black text-white px-2 py-1">
-                      LVL {spell.level}
-                    </span>
+              <ContextMenu key={spell.id}>
+                <ContextMenuTrigger asChild>
+                  <div className="border-2 border-black p-3 bg-white cursor-pointer">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => onToggleSpell(spell.id)}
+                          className={`h-8 px-3 border-2 border-black ${
+                            spell.active 
+                              ? 'bg-white text-black hover:bg-gray-100' 
+                              : 'bg-gray-300 text-gray-600 line-through'
+                          }`}
+                          size="sm"
+                        >
+                          <span className="font-black text-xs">
+                            {spell.active ? 'READY' : 'FAILED'}
+                          </span>
+                        </Button>
+                        <span className="font-black">{spell.name}</span>
+                        <span className="text-xs bg-black text-white px-2 py-1">
+                          LVL {spell.level}
+                        </span>
+                      </div>
+                      <ContextMenu>
+                        <ContextMenuTrigger asChild>
+                          <Button
+                            onClick={() => handleCastingRoll(spell)}
+                            className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+                            size="sm"
+                            disabled={!spell.active}
+                          >
+                            <Dices size={16} className="mr-1" />
+                            Cast
+                          </Button>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleCastingRoll(spell, 'advantage')}>
+                            Roll with Advantage
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleCastingRoll(spell, 'disadvantage')}>
+                            Roll with Disadvantage
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
+                    </div>
+                    <p className="text-sm text-gray-600">{spell.description}</p>
                   </div>
-                  <ContextMenu>
-                    <ContextMenuTrigger asChild>
-                      <Button
-                        onClick={() => handleCastingRoll(spell)}
-                        className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-                        size="sm"
-                      >
-                        <Dices size={16} className="mr-1" />
-                        Cast
-                      </Button>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuItem onClick={() => handleCastingRoll(spell, 'advantage')}>
-                        Roll with Advantage
-                      </ContextMenuItem>
-                      <ContextMenuItem onClick={() => handleCastingRoll(spell, 'disadvantage')}>
-                        Roll with Disadvantage
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  </ContextMenu>
-                </div>
-                <p className="text-sm text-gray-600">{spell.description}</p>
-              </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => {
+                    setEditingSpell(spell);
+                    setShowSpellDialog(true);
+                  }}>
+                    Edit Spell
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => onRemoveSpell(spell.id)} className="text-red-600">
+                    Delete Spell
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))
           )}
         </div>
       </div>
+
+      {/* Add/Edit Spell Dialog */}
+      {showSpellDialog && (
+        <EditSpellDialog
+          spell={editingSpell}
+          onSave={(spell) => {
+            onAddSpell(spell);
+            setShowSpellDialog(false);
+            setEditingSpell(undefined);
+          }}
+          onCancel={() => {
+            setShowSpellDialog(false);
+            setEditingSpell(undefined);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,8 +1,14 @@
-import { Package, ShoppingBag, Coins, Plus, Trash2 } from 'lucide-react';
+import { Package, ShoppingBag, Coins, Plus } from 'lucide-react';
 import { Switch } from './ui/switch';
 import { Button } from './ui/button';
 import { EditItemDialog, type ItemData } from './EditItemDialog';
 import { useState } from 'react';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from './ui/context-menu';
 
 interface InventoryViewProps {
   items: ItemData[];
@@ -20,6 +26,7 @@ interface InventoryViewProps {
 
 export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onRemoveItem, strScore, coins }: InventoryViewProps) {
   const [showItemDialog, setShowItemDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<ItemData | undefined>(undefined);
 
   const weaponsAndArmor = items.filter(item => 
     item.type === 'weapon' || item.type === 'armor' || item.type === 'shield'
@@ -105,52 +112,58 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
             <p className="text-gray-500 italic">No equipment</p>
           ) : (
             weaponsAndArmor.map((item) => (
-              <div
-                key={item.id}
-                className={`border-2 border-black p-3 group ${
-                  item.equipped ? 'bg-black text-white' : 'bg-white'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-black">{item.name}</span>
-                      {item.slots !== undefined && item.slots > 0 && (
-                        <span className="text-xs bg-gray-800 text-white px-2 py-0.5 rounded">
-                          {item.slots} slot{item.slots !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </div>
-                    <div className={`text-sm ${item.equipped ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {formatItemDetails(item)}
-                    </div>
-                    {item.description && (
-                      <div className={`text-sm ${item.equipped ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {item.description}
+              <ContextMenu key={item.id}>
+                <ContextMenuTrigger asChild>
+                  <div
+                    className={`border-2 border-black p-3 group cursor-pointer ${
+                      item.equipped ? 'bg-black text-white' : 'bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black">{item.name}</span>
+                          {item.slots !== undefined && item.slots > 0 && (
+                            <span className="text-xs bg-gray-800 text-white px-2 py-0.5 rounded">
+                              {item.slots} slot{item.slots !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                        <div className={`text-sm ${item.equipped ? 'text-gray-300' : 'text-gray-600'}`}>
+                          {formatItemDetails(item)}
+                        </div>
+                        {item.description && (
+                          <div className={`text-sm ${item.equipped ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {item.description}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-3">
-                    <Button
-                      onClick={() => onRemoveItem(item.id)}
-                      size="sm"
-                      variant="ghost"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 size={16} className="text-red-600" />
-                    </Button>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs uppercase font-black">
-                        {item.equipped ? 'Equipped' : 'Equip'}
-                      </span>
-                      <Switch
-                        checked={item.equipped}
-                        onCheckedChange={() => onToggleEquipped(item.id)}
-                      />
+                      <div className="flex items-center gap-2 ml-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs uppercase font-black">
+                            {item.equipped ? 'Equipped' : 'Equip'}
+                          </span>
+                          <Switch
+                            checked={item.equipped}
+                            onCheckedChange={() => onToggleEquipped(item.id)}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => {
+                    setEditingItem(item);
+                    setShowItemDialog(true);
+                  }}>
+                    Edit Item
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => onRemoveItem(item.id)} className="text-red-600">
+                    Delete Item
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))
           )}
         </div>
@@ -164,34 +177,41 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
             <p className="text-gray-500 italic">No items</p>
           ) : (
             otherItems.map((item) => (
-              <div key={item.id} className="border-2 border-black p-3 bg-white group">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-black">{item.name}</span>
-                      {item.slots !== undefined && item.slots > 0 && (
-                        <span className="text-xs bg-gray-800 text-white px-2 py-0.5 rounded">
-                          {item.slots} slot{item.slots !== 1 ? 's' : ''}
-                        </span>
-                      )}
+              <ContextMenu key={item.id}>
+                <ContextMenuTrigger asChild>
+                  <div className="border-2 border-black p-3 bg-white group cursor-pointer">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black">{item.name}</span>
+                          {item.slots !== undefined && item.slots > 0 && (
+                            <span className="text-xs bg-gray-800 text-white px-2 py-0.5 rounded">
+                              {item.slots} slot{item.slots !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                        {formatItemDetails(item) && (
+                          <div className="text-sm text-gray-600">{formatItemDetails(item)}</div>
+                        )}
+                        {item.description && (
+                          <div className="text-sm text-gray-600 mt-1">{item.description}</div>
+                        )}
+                      </div>
                     </div>
-                    {formatItemDetails(item) && (
-                      <div className="text-sm text-gray-600">{formatItemDetails(item)}</div>
-                    )}
-                    {item.description && (
-                      <div className="text-sm text-gray-600 mt-1">{item.description}</div>
-                    )}
                   </div>
-                  <Button
-                    onClick={() => onRemoveItem(item.id)}
-                    size="sm"
-                    variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                  >
-                    <Trash2 size={16} className="text-red-600" />
-                  </Button>
-                </div>
-              </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => {
+                    setEditingItem(item);
+                    setShowItemDialog(true);
+                  }}>
+                    Edit Item
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => onRemoveItem(item.id)} className="text-red-600">
+                    Delete Item
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))
           )}
         </div>
@@ -199,8 +219,16 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
 
       <EditItemDialog
         open={showItemDialog}
-        onClose={() => setShowItemDialog(false)}
-        onSave={onAddItem}
+        item={editingItem}
+        onClose={() => {
+          setShowItemDialog(false);
+          setEditingItem(undefined);
+        }}
+        onSave={(item) => {
+          onAddItem(item);
+          setShowItemDialog(false);
+          setEditingItem(undefined);
+        }}
       />
     </div>
   );
