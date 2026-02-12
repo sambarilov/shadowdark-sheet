@@ -18,6 +18,7 @@ interface Weapon {
   weaponAbility: string;
   equipped: boolean;
   attackBonus?: number;
+  damageBonus?: string;
 }
 
 interface Spell {
@@ -72,15 +73,15 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     const selectedAbility = weaponAbilities[weapon.id] || weapon.weaponAbility;
     const ability = abilities.find(a => a.shortName === selectedAbility);
     const abilityBonus = ability?.bonus || 0;
-    
+
     // Get weapon attack bonus
     const weaponBonus = weaponBonuses[weapon.id] ?? weapon.attackBonus ?? 0;
     const totalBonus = abilityBonus + weaponBonus;
-    
+
     // Roll attack
     let attackRoll: number;
     let attackRollDetails = '';
-    
+
     if (mode === 'advantage') {
       const roll1 = rollDice(20);
       const roll2 = rollDice(20);
@@ -94,19 +95,38 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     } else {
       attackRoll = rollDice(20);
     }
-    
+
     const attackTotal = attackRoll + totalBonus;
     const attackBonusText = totalBonus !== 0 ? ` ${totalBonus >= 0 ? '+' : ''}${totalBonus}` : '';
     const attackTotalText = totalBonus !== 0 ? ` = ${attackTotal}` : '';
-    
+
     // Roll damage
     const damageDieMatch = weapon.damage.match(/d(\d+)/);
     const damageDie = damageDieMatch ? parseInt(damageDieMatch[1]) : 6;
     const damageRoll = rollDice(damageDie);
-    const damageTotal = damageRoll + totalBonus;
-    const damageBonusText = totalBonus !== 0 ? ` ${totalBonus >= 0 ? '+' : ''}${totalBonus}` : '';
-    const damageTotalText = totalBonus !== 0 ? ` = ${damageTotal}` : '';
     
+    // Handle damage bonus (can be a number or dice roll like "1d4")
+    let damageBonusValue = 0;
+    let damageBonusText = '';
+    if (weapon.damageBonus) {
+      const bonusDiceMatch = weapon.damageBonus.match(/d(\d+)/);
+      if (bonusDiceMatch) {
+        // It's a dice roll
+        const bonusDie = parseInt(bonusDiceMatch[1]);
+        damageBonusValue = rollDice(bonusDie);
+        damageBonusText = ` + ${weapon.damageBonus}(${damageBonusValue})`;
+      } else {
+        // It's a number
+        damageBonusValue = parseInt(weapon.damageBonus) || 0;
+        if (damageBonusValue !== 0) {
+          damageBonusText = ` ${damageBonusValue >= 0 ? '+' : ''}${damageBonusValue}`;
+        }
+      }
+    }
+    
+    const damageTotal = damageRoll + damageBonusValue;
+    const damageTotalText = damageBonusValue !== 0 ? ` = ${damageTotal}` : '';
+
     const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
     setRollResult(`${weapon.name}${modeText}: Attack ${attackRoll}${attackRollDetails}${attackBonusText}${attackTotalText} | Damage ${damageRoll}${damageBonusText}${damageTotalText}`);
   };
@@ -114,7 +134,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
   const handleCastingRoll = (spell: Spell, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
     let castRoll: number;
     let rollDetails = '';
-    
+
     if (mode === 'advantage') {
       const roll1 = rollDice(20);
       const roll2 = rollDice(20);
@@ -128,7 +148,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     } else {
       castRoll = rollDice(20);
     }
-    
+
     const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
     setRollResult(`${spell.name}${modeText}: ${castRoll}${rollDetails}`);
   };
@@ -139,7 +159,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     <div className="h-full flex flex-col relative">
       {/* Roll Result Popup - Floating */}
       {rollResult && (
-        <div 
+        <div
           onClick={() => setRollResult(null)}
           className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md"
         >
@@ -147,7 +167,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
           {rollResult}
         </div>
       )}
-      
+
       {/* Header Stats */}
       <div className="flex gap-4 mb-6">
         <div className="flex-1 border-4 border-black p-4 bg-white flex flex-col items-center justify-center">
@@ -201,7 +221,9 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex-1">
                     <div className="font-black">{weapon.name}</div>
-                    <div className="text-sm text-gray-600">Damage: {weapon.damage}</div>
+                    <div className="text-sm text-gray-600">
+                      Damage: {weapon.damage}{weapon.damageBonus ? ` + ${weapon.damageBonus}` : ''}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <EditableStatField
@@ -283,11 +305,10 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
                       <div className="flex items-center gap-2">
                         <Button
                           onClick={() => onToggleSpell(spell.id)}
-                          className={`h-8 px-3 border-2 border-black ${
-                            spell.active 
-                              ? 'bg-white text-black hover:bg-gray-100' 
+                          className={`h-8 px-3 border-2 border-black ${spell.active
+                              ? 'bg-white text-black hover:bg-gray-100'
                               : 'bg-gray-300 text-gray-600 line-through'
-                          }`}
+                            }`}
                           size="sm"
                         >
                           <span className="font-black text-xs">

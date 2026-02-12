@@ -1,6 +1,63 @@
 # Shadowdark Character Sheet
 
-A mobile-optimized digital character sheet for the Shadowdark RPG system. Import a Shadowdarklings character and manage inventory, spells, and interact with shops all in one streamlined interface.
+A mobile-optimized digital character sheet for the Shadowdark RPG system. Import a [Shadowdarklings](https://shadowdarklings.net/) character and manage inventory, spells, and interact with shops all in one streamlined interface.
+
+It's fully offline. So you can load your character and play even without internet/electricity
+
+You can import/export the characters as JSON files
+
+This was rushed in a couple of days, so expect a lot of bugs. Open an issue if you find any
+
+The idea of the project is NOT to be a fully automated character sheet. It should be flexible instead of automated to cover all scenarios. 
+
+Below is a list of things I'm NOT thinking of supporting with possible alternatives
+
+- Character generation. (You can input values manually or import from Shadowdarklings)
+- Calculate success of spellcasting (might depend on Talents/Items, etc)
+- Add Dex bonus to some kinds of armor (there's a field where you can input a bonus to AC)
+- Track bonuses from talents/items (use the notes/bonus fields to add manually the bonuses or to remind yourself of those). 
+- Have spell data from any suplements (we have from the Core Rules and you can add your own)
+- Item data. We do have a small object in the code to track the damage die from each weapon and which ability they use (which I hope is ok, Kelsey. Let me know if it's not). See Shop below
+- Adding potions, wands, etc (create a consumable and add the apropriate amount of units for the amount of doses/charges)
+- Travel rules (I'm thinking of creating a GM version of this with that included, maybe)
+- Retainers (open another tab)
+- Mounts (I'm thinking of adding a stashed items section and just tracking the number of slots there)
+
+### The shop
+
+We have a functional, but empty shop, since the shadowdark rulebook does not allow us to fully copy the items table
+
+You can create your items in the store and export that json, so you could give that to your players.
+
+The store data is also exported alongside your character, so you don´t need to upload it every time
+
+## Usage Tips
+
+### Quick Actions
+- **Click to Edit**: Most fields can be edited by clicking directly on them
+- **Right-Click Menus**: Access additional options on weapons, spells, inventory items, and shop items
+- **Swipe Navigation**: Swipe left/right to switch between character panels
+- **Long Press**: On mobile, long-press items to access context menus
+
+### Import/Export Workflow
+1. Use the **Upload** button to import a character JSON file
+2. Use the **Download** button to export your current character
+3. Shop data is included in character exports but can also be exported separately
+
+### Shop Management
+1. Open the shop from the inventory view
+2. Switch between **Buy** and **Sell** modes
+3. Adjust markup percentages to customize pricing
+4. Use the **+** button to add custom items to the shop
+5. Right-click items to edit or remove them
+
+### Dice Rolling
+1. Click the **dice icon** button to open the roller
+2. Add dice to your pool by clicking dice types
+3. Select advantage/disadvantage mode if needed
+4. Add any modifiers in the bonus field
+5. Hit **Roll** to see results
+
 
 ## Technologies
 
@@ -55,36 +112,9 @@ npm run preview
 
 ## Deployment
 
-This project is configured for GitHub Pages deployment. On every push to the `main` branch, the site automatically builds and deploys via GitHub Actions.
+This project is configured for GitHub Pages deployment. On every push to the `master` branch, the site automatically builds and deploys via GitHub Actions.
 
 The live site will be available at: `https://[your-username].github.io/shadowdark-sheet/`
-
-## Usage Tips
-
-### Quick Actions
-- **Click to Edit**: Most fields can be edited by clicking directly on them
-- **Right-Click Menus**: Access additional options on weapons, spells, inventory items, and shop items
-- **Swipe Navigation**: Swipe left/right to switch between character panels
-- **Long Press**: On mobile, long-press items to access context menus
-
-### Import/Export Workflow
-1. Use the **Upload** button to import a character JSON file
-2. Use the **Download** button to export your current character
-3. Shop data is included in character exports but can also be exported separately
-
-### Shop Management
-1. Open the shop from the inventory view
-2. Switch between **Buy** and **Sell** modes
-3. Adjust markup percentages to customize pricing
-4. Use the **+** button to add custom items to the shop
-5. Right-click items to edit or remove them
-
-### Dice Rolling
-1. Click the **dice icon** button to open the roller
-2. Add dice to your pool by clicking dice types
-3. Select advantage/disadvantage mode if needed
-4. Add any modifiers in the bonus field
-5. Hit **Roll** to see results
 
 ## License
 

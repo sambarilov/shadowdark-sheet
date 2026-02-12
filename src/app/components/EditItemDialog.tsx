@@ -24,6 +24,7 @@ export interface ItemData {
   weaponAbility?: string;
   damage?: string;
   attackBonus?: number;
+  damageBonus?: string;
   // Armor specific
   armorAC?: number;
   // Shield specific
@@ -55,6 +56,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
   const [weaponAbility, setWeaponAbility] = useState(item?.weaponAbility || 'STR');
   const [damage, setDamage] = useState(item?.damage || '1d6');
   const [attackBonus, setAttackBonus] = useState(item?.attackBonus || 0);
+  const [damageBonus, setDamageBonus] = useState(item?.damageBonus || '');
   
   // Armor fields
   const [armorAC, setArmorAC] = useState(item?.armorAC || 0);
@@ -81,6 +83,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setWeaponAbility(item.weaponAbility || 'STR');
       setDamage(item.damage || '1d6');
       setAttackBonus(item.attackBonus || 0);
+      setDamageBonus(item.damageBonus || '');
       setArmorAC(item.armorAC || 0);
       setShieldACBonus(item.shieldACBonus || 0);
       setQuantity(item.quantity || 1);
@@ -99,6 +102,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setWeaponAbility('STR');
       setDamage('1d6');
       setAttackBonus(0);
+      setDamageBonus('');
       setArmorAC(0);
       setShieldACBonus(0);
       setQuantity(1);
@@ -125,6 +129,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         itemData.weaponAbility = weaponAbility;
         itemData.damage = damage;
         itemData.attackBonus = attackBonus;
+        itemData.damageBonus = damageBonus.trim() || undefined;
       } else if (type === 'armor') {
         itemData.armorAC = armorAC;
       } else if (type === 'shield') {
@@ -148,6 +153,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         setWeaponAbility('STR');
         setDamage('1d6');
         setAttackBonus(0);
+        setDamageBonus('');
         setArmorAC(0);
         setShieldACBonus(0);
         setQuantity(1);
@@ -249,6 +255,15 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
                   onChange={(e) => setAttackBonus(parseInt(e.target.value) || 0)}
                   className="border-2 border-black mt-1"
                   placeholder="0"
+                />
+              </div>
+              <div>
+                <Label className="font-black">Damage Bonus</Label>
+                <Input
+                  value={damageBonus}
+                  onChange={(e) => setDamageBonus(e.target.value)}
+                  className="border-2 border-black mt-1"
+                  placeholder="e.g., 2 or 1d4"
                 />
               </div>
             </>

@@ -749,7 +749,8 @@ function App() {
       damage: item.damage!,
       weaponAbility: item.weaponAbility || 'STR',
       equipped: item.equipped,
-      attackBonus: item.attackBonus || 0
+      attackBonus: item.attackBonus || 0,
+      damageBonus: item.damageBonus
     }));
 
   // Calculate AC: base 10, overridden by best equipped armor, plus best equipped shield bonus, plus AC bonus
