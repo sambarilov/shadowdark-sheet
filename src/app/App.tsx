@@ -5,6 +5,7 @@ import { InventoryView, type ItemData } from './components/InventoryView';
 import { CharacterAttributesView, type CharacterAttribute, type Talent, type Ability } from './components/CharacterAttributesView';
 import { ShopView, type ShopItem } from './components/ShopView';
 import { DiceRollerDrawer } from './components/DiceRollerDrawer';
+import { EditSpellDialog } from './components/EditSpellDialog';
 import { Button } from './components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './components/ui/dialog';
 import { Textarea } from './components/ui/textarea';
@@ -79,6 +80,9 @@ function App() {
   const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('attributes');
   const [showShop, setShowShop] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
+  const [showSpellDialog, setShowSpellDialog] = useState(false);
+  const [editingSpell, setEditingSpell] = useState<Spell | undefined>(undefined);
+  const [playerRollResult, setPlayerRollResult] = useState<string | null>(null);
   const [diceRollResult, setDiceRollResult] = useState<string | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -884,6 +888,11 @@ function App() {
                     onRemoveSpell={handleRemoveSpell}
                     onUpdateWeaponBonuses={setWeaponBonuses}
                     onUpdateNotes={setNotes}
+                    onOpenSpellDialog={(spell) => {
+                      setEditingSpell(spell);
+                      setShowSpellDialog(true);
+                    }}
+                    onShowRollResult={setPlayerRollResult}
                   />
                 </div>
 
@@ -960,18 +969,56 @@ function App() {
         {diceRollResult && (
           <div 
             onClick={() => setDiceRollResult(null)}
-            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md"
+            className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2">
-              <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
-              <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/>
-              <path d="M6 18h.01"/>
-              <path d="M10 14h.01"/>
-              <path d="M15 6h.01"/>
-              <path d="M18 9h.01"/>
-            </svg>
-            {diceRollResult}
+            <div className="border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md pointer-events-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2">
+                <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
+                <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/>
+                <path d="M6 18h.01"/>
+                <path d="M10 14h.01"/>
+                <path d="M15 6h.01"/>
+                <path d="M18 9h.01"/>
+              </svg>
+              {diceRollResult}
+            </div>
           </div>
+        )}
+
+        {/* Player Roll Result Popup */}
+        {playerRollResult && (
+          <div
+            onClick={() => setPlayerRollResult(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
+          >
+            <div className="border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md pointer-events-auto">
+              <svg className="inline-block mr-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
+                <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/>
+                <path d="M6 18h.01"/>
+                <path d="M10 14h.01"/>
+                <path d="M15 6h.01"/>
+                <path d="M18 9h.01"/>
+              </svg>
+              {playerRollResult}
+            </div>
+          </div>
+        )}
+
+        {/* Edit Spell Dialog */}
+        {showSpellDialog && (
+          <EditSpellDialog
+            spell={editingSpell}
+            onSave={(spell) => {
+              handleAddSpell(spell);
+              setShowSpellDialog(false);
+              setEditingSpell(undefined);
+            }}
+            onCancel={() => {
+              setShowSpellDialog(false);
+              setEditingSpell(undefined);
+            }}
+          />
         )}
       </div>
 

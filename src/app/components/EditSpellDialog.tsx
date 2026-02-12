@@ -42,7 +42,7 @@ export function EditSpellDialog({ spell, onSave, onCancel }: EditSpellDialogProp
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
       <div className="bg-white border-4 border-black p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-black uppercase mb-4">
           {spell ? 'Edit Spell' : 'Add New Spell'}

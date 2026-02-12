@@ -103,17 +103,21 @@ export function CharacterAttributesView({
   };
 
   return (
-    <div className="flex flex-col relative">
+    <>
       {/* Roll Result Popup - Floating */}
       {rollResult && (
-        <div 
+        <div
           onClick={() => setRollResult(null)}
-          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md"
+          className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
         >
-          <Dices className="inline-block mr-2" size={20} />
-          {rollResult}
+          <div className="border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md pointer-events-auto">
+            <Dices className="inline-block mr-2" size={20} />
+            {rollResult}
+          </div>
         </div>
       )}
+
+      <div className="flex flex-col relative">
 
       {/* Attributes Section */}
       <div className="mb-6">
@@ -326,5 +330,6 @@ export function CharacterAttributesView({
         }}
       />
     </div>
+    </>
   );
 }

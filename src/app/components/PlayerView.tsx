@@ -3,7 +3,6 @@ import { Sword, Sparkles, Dices, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { EditableStatField } from './EditableStatField';
 import { EditableAbilityField } from './EditableAbilityField';
-import { EditSpellDialog } from './EditSpellDialog';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -55,14 +54,12 @@ interface PlayerViewProps {
   onAddSpell: (spell: Spell) => void;
   onRemoveSpell: (id: string) => void;
   onUpdateWeaponBonuses: (bonuses: Record<string, number>) => void;
-  onUpdateNotes: (notes: string) => void;
+  onUpdateNotes: (notes: string) => void;  onOpenSpellDialog: (spell?: Spell) => void;
+  onShowRollResult: (result: string) => void;
 }
 
-export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities, weaponBonuses, notes, onUpdateHP, onUpdateMaxHP, onUpdateAcBonus, onToggleSpell, onAddSpell, onRemoveSpell, onUpdateWeaponBonuses, onUpdateNotes }: PlayerViewProps) {
-  const [rollResult, setRollResult] = useState<string | null>(null);
+export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities, weaponBonuses, notes, onUpdateHP, onUpdateMaxHP, onUpdateAcBonus, onToggleSpell, onAddSpell, onRemoveSpell, onUpdateWeaponBonuses, onUpdateNotes, onOpenSpellDialog, onShowRollResult }: PlayerViewProps) {
   const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
-  const [showSpellDialog, setShowSpellDialog] = useState(false);
-  const [editingSpell, setEditingSpell] = useState<Spell | undefined>(undefined);
 
   const rollDice = (sides: number) => {
     return Math.floor(Math.random() * sides) + 1;
@@ -128,7 +125,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     const damageTotalText = damageBonusValue !== 0 ? ` = ${damageTotal}` : '';
 
     const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
-    setRollResult(`${weapon.name}${modeText}: Attack ${attackRoll}${attackRollDetails}${attackBonusText}${attackTotalText} | Damage ${damageRoll}${damageBonusText}${damageTotalText}`);
+    onShowRollResult(`${weapon.name}${modeText}: Attack ${attackRoll}${attackRollDetails}${attackBonusText}${attackTotalText} | Damage ${damageRoll}${damageBonusText}${damageTotalText}`);
   };
 
   const handleCastingRoll = (spell: Spell, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
@@ -150,23 +147,14 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     }
 
     const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
-    setRollResult(`${spell.name}${modeText}: ${castRoll}${rollDetails}`);
+    onShowRollResult(`${spell.name}${modeText}: ${castRoll}${rollDetails}`);
   };
 
   const equippedWeapons = weapons.filter(w => w.equipped);
 
   return (
-    <div className="h-full flex flex-col relative">
-      {/* Roll Result Popup - Floating */}
-      {rollResult && (
-        <div
-          onClick={() => setRollResult(null)}
-          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md"
-        >
-          <Dices className="inline-block mr-2" size={20} />
-          {rollResult}
-        </div>
-      )}
+    <>
+      <div className="h-full flex flex-col relative">
 
       {/* Header Stats */}
       <div className="flex gap-4 mb-6">
@@ -285,7 +273,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
             <h2 className="text-xl font-black uppercase">Spells</h2>
           </div>
           <Button
-            onClick={() => setShowSpellDialog(true)}
+            onClick={() => onOpenSpellDialog()}
             size="sm"
             variant="outline"
             className="border-2 border-black"
@@ -352,8 +340,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
                 </ContextMenuTrigger>
                 <ContextMenuContent>
                   <ContextMenuItem onClick={() => {
-                    setEditingSpell(spell);
-                    setShowSpellDialog(true);
+                    onOpenSpellDialog(spell);
                   }}>
                     Edit Spell
                   </ContextMenuItem>
@@ -366,22 +353,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
           )}
         </div>
       </div>
-
-      {/* Add/Edit Spell Dialog */}
-      {showSpellDialog && (
-        <EditSpellDialog
-          spell={editingSpell}
-          onSave={(spell) => {
-            onAddSpell(spell);
-            setShowSpellDialog(false);
-            setEditingSpell(undefined);
-          }}
-          onCancel={() => {
-            setShowSpellDialog(false);
-            setEditingSpell(undefined);
-          }}
-        />
-      )}
     </div>
+    </>
   );
 }
