@@ -19,7 +19,7 @@ export interface ItemData {
     silver: number;
     copper: number;
   };
-  slots?: number;
+  slots: number;
   // Weapon specific
   weaponAbility?: string;
   damage?: string;
@@ -30,8 +30,7 @@ export interface ItemData {
   // Shield specific
   shieldACBonus?: number;
   // Consumable specific
-  quantity?: number;
-  totalUnits?: number;
+  totalUnits: number;
   currentUnits?: number;
   unitsPerSlot?: number;
 }
@@ -65,7 +64,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
   const [shieldACBonus, setShieldACBonus] = useState(item?.shieldACBonus || 0);
   
   // Consumable fields
-  const [quantity, setQuantity] = useState(item?.quantity || 1);
   const [totalUnits, setTotalUnits] = useState(item?.totalUnits || 1);
   const [currentUnits, setCurrentUnits] = useState(item?.currentUnits || item?.totalUnits || 1);
   const [unitsPerSlot, setUnitsPerSlot] = useState(item?.unitsPerSlot || 1);
@@ -86,7 +84,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setDamageBonus(item.damageBonus || '');
       setArmorAC(item.armorAC || 0);
       setShieldACBonus(item.shieldACBonus || 0);
-      setQuantity(item.quantity || 1);
       setTotalUnits(item.totalUnits || 1);
       setCurrentUnits(item.currentUnits || item.totalUnits || 1);
       setUnitsPerSlot(item.unitsPerSlot || (item.totalUnits || 1) / (item.slots || 1));
@@ -105,7 +102,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setDamageBonus('');
       setArmorAC(0);
       setShieldACBonus(0);
-      setQuantity(1);
       setTotalUnits(1);
       setCurrentUnits(1);
       setUnitsPerSlot(1);
@@ -122,7 +118,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         equipped: item?.equipped || false,
         value: { gold, silver, copper },
         slots,
-        quantity,
       };
 
       if (type === 'weapon') {
@@ -135,7 +130,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       } else if (type === 'shield') {
         itemData.shieldACBonus = shieldACBonus;
       } else if (type === 'consumable') {
-        itemData.totalUnits = unitsPerSlot * quantity;
+        itemData.totalUnits = totalUnits;
         itemData.currentUnits = currentUnits;
         itemData.unitsPerSlot = unitsPerSlot;
       }
@@ -156,7 +151,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         setDamageBonus('');
         setArmorAC(0);
         setShieldACBonus(0);
-        setQuantity(1);
         setTotalUnits(1);
         setCurrentUnits(1);
         setUnitsPerSlot(1);
@@ -297,16 +291,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
 
           {type === 'consumable' && (
             <>
-              <div>
-                <Label className="font-black">Quantity</Label>
-                <Input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                  className="border-2 border-black mt-1"
-                  min={1}
-                />
-              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="font-black">Units Per Slot</Label>
@@ -316,7 +300,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
                     onChange={(e) => {
                       const newTotal = parseInt(e.target.value) || 1;
                       setUnitsPerSlot(newTotal);
-                      setTotalUnits(newTotal * quantity);
+                      setTotalUnits(newTotal);
                       if (currentUnits > newTotal) {
                         setCurrentUnits(newTotal);
                       }

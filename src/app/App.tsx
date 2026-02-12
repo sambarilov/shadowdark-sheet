@@ -181,7 +181,6 @@ function App() {
         name: item.name,
         type: item.type,
         description: item.description || '',
-        quantity: item.quantity || 1,
         slots: item.slots || 1,
         cost: item.value?.gold || item.value?.silver || item.value?.copper || 0,
         currency: item.value?.gold ? 'gp' : item.value?.silver ? 'sp' : 'cp',
@@ -444,14 +443,14 @@ function App() {
         return ITEMS_PER_TYPE[item.name] || 'gear';
       }
 
-      const newInventory: ItemData[] = json.gear.map((item: any) => {
-        const itemData: ItemData = {
+      const newInventory: any[] = json.gear.map((item: any) => {
+        const itemData: any = {
           id: item.instanceId || `item-${Math.random()}`,
           name: item.name || 'Unknown Item',
           type: itemType(item),
           equipped: item.equipped || false,
           description: item.description || '',
-          quantity: item.quantity || 1,
+          quantity: item.quantity || 1, // Keep temporarily for splitting
           value: { 
             gold: item.currency === 'gp' ? item.cost : 0,
             silver: item.currency === 'sp' ? item.cost : 0,
@@ -510,7 +509,34 @@ function App() {
         return itemData;
       });
       
-      setInventory(newInventory);
+      // Expand items with quantity > 1 into individual items
+      const expandedInventory: ItemData[] = [];
+      newInventory.forEach((item: any) => {
+        const quantity = item.quantity || 1;
+        if (quantity > 1) {
+          // Create individual items for each quantity, dividing slots and totalUnits
+          const slotsPerItem = Math.ceil(item.slots / quantity);
+          const totalUnitsPerItem = Math.floor(item.totalUnits / quantity);
+          const currentUnitsPerItem = item.currentUnits ? Math.floor(item.currentUnits / quantity) : undefined;
+          
+          for (let i = 0; i < quantity; i++) {
+            const { quantity: _, ...itemWithoutQuantity } = item;
+            expandedInventory.push({
+              ...itemWithoutQuantity,
+              id: `${item.id}-${i}`,
+              slots: slotsPerItem,
+              totalUnits: totalUnitsPerItem,
+              currentUnits: currentUnitsPerItem,
+              unitsPerSlot: currentUnitsPerItem,
+            });
+          }
+        } else {
+          const { quantity: _, ...itemWithoutQuantity } = item;
+          expandedInventory.push(itemWithoutQuantity);
+        }
+      });
+      
+      setInventory(expandedInventory);
     }
 
     // Map spells
@@ -608,8 +634,8 @@ function App() {
     setInventory((items: ItemData[]) => 
       items.map((item: ItemData) => {
         if (item.id === id) {
-          // Use unitsPerSlot/currentUnits/quantity system
-          if (item.unitsPerSlot !== undefined && item.currentUnits !== undefined && item.quantity !== undefined) {
+          // Use unitsPerSlot/currentUnits system
+          if (item.unitsPerSlot !== undefined && item.currentUnits !== undefined) {
             let newCurrentUnits = item.currentUnits - 1;
             let newQuantity = Math.ceil(newCurrentUnits / item.unitsPerSlot);
             
@@ -622,7 +648,7 @@ function App() {
             // Full quantities (newQuantity - 1) plus the partial current quantity
             const totalRemaining = (newQuantity - 1) * item.unitsPerSlot + newCurrentUnits;
             toast.success(`Used ${item.name}. ${totalRemaining} unit${totalRemaining !== 1 ? 's' : ''} remaining.`);
-            return { ...item, slots: newQuantity, currentUnits: newCurrentUnits, quantity: newQuantity };
+            return { ...item, slots: newQuantity, currentUnits: newCurrentUnits };
           }
         }
         return item;

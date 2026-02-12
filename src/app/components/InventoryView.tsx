@@ -50,9 +50,9 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
     if (item.shieldACBonus !== undefined) details.push(`AC +${item.shieldACBonus}`);
     
     // Show currentUnits/totalUnits across all quantities
-    if (item.unitsPerSlot !== undefined && item.currentUnits !== undefined && item.quantity !== undefined && item.unitsPerSlot > 1) {
-      const totalCurrentUnits = (item.quantity - 1) * item.unitsPerSlot + item.currentUnits;
-      const totalMaxUnits = item.quantity * item.unitsPerSlot;
+    if (item.unitsPerSlot !== undefined && item.currentUnits !== undefined && item.unitsPerSlot > 1) {
+      const totalCurrentUnits = item.currentUnits;
+      const totalMaxUnits = item.totalUnits || item.unitsPerSlot;
       details.push(`Units: ${totalCurrentUnits}/${totalMaxUnits}`);
     }
     
@@ -222,7 +222,6 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
                         {item.description && (
                           <div className="text-sm text-gray-600 mt-1">{item.description}</div>
                         )}
-                        <div className="text-sm text-gray-600 mt-1">{item.quantity}x</div>
                       </div>
                       {item.type === 'consumable' && 
                         item.totalUnits !== undefined && 
