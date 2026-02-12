@@ -39,6 +39,7 @@ function App() {
   const [characterImported, setCharacterImported] = useState(false);
   const [currentXP, setCurrentXP] = useState(0);
   const [totalXP, setTotalXP] = useState(1000);
+  const [languages, setLanguages] = useState('Common');
   const [hp, setHp] = useState(24);
   const [maxHp, setMaxHp] = useState(32);
   
@@ -257,6 +258,11 @@ function App() {
           silver: json.silver || 0,
           copper: json.copper || 0
         });
+
+        // Map languages
+        if (json.languages) {
+          setLanguages(json.languages);
+        }
 
         // Map talents from bonuses
         if (json.bonuses && Array.isArray(json.bonuses)) {
@@ -498,6 +504,7 @@ function App() {
         bonuses,
         gear,
         spellsKnown,
+        languages,
         gold: coins.gold,
         silver: coins.silver,
         copper: coins.copper
@@ -808,11 +815,14 @@ function App() {
                     luckTokenUsed={luckTokenUsed}
                     currentXP={currentXP}
                     totalXP={totalXP}
+                    languages={languages}
                     onToggleLuckToken={() => setLuckTokenUsed(!luckTokenUsed)}
                     onUpdateXP={(current, total) => {
                       setCurrentXP(current);
                       setTotalXP(total);
                     }}
+                    onUpdateLanguages={setLanguages}
+                    onUpdateAttributes={setCharacterAttributes}
                     onUpdateAbilities={setAbilities}
                     onAddTalent={handleAddTalent}
                     onRemoveTalent={handleRemoveTalent}

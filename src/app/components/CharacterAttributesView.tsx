@@ -36,8 +36,11 @@ interface CharacterAttributesViewProps {
   luckTokenUsed: boolean;
   currentXP: number;
   totalXP: number;
+  languages: string;
   onToggleLuckToken: () => void;
   onUpdateXP: (current: number, total: number) => void;
+  onUpdateLanguages: (languages: string) => void;
+  onUpdateAttributes: (attributes: CharacterAttribute[]) => void;
   onUpdateAbilities: (abilities: Ability[]) => void;
   onAddTalent: (talent: Talent) => void;
   onRemoveTalent: (id: string) => void;
@@ -50,8 +53,11 @@ export function CharacterAttributesView({
   luckTokenUsed,
   currentXP,
   totalXP,
+  languages,
   onToggleLuckToken,
   onUpdateXP,
+  onUpdateLanguages,
+  onUpdateAttributes,
   onUpdateAbilities,
   onAddTalent,
   onRemoveTalent
@@ -115,46 +121,33 @@ export function CharacterAttributesView({
               <div className="text-xs uppercase tracking-wider text-gray-600 mb-1">
                 {attr.name}
               </div>
-              <div className="font-black text-sm">{attr.value}</div>
+              <input
+                type="text"
+                value={attr.value}
+                onChange={(e) => {
+                  const newAttributes = [...attributes];
+                  newAttributes[index] = { ...attr, value: e.target.value };
+                  onUpdateAttributes(newAttributes);
+                }}
+                className="w-full font-black text-sm bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+              />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Luck Token and XP */}
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        <div className="h-14 border-4 border-black bg-white flex flex-col items-center justify-center">
-          <div className="text-xs uppercase tracking-wider text-gray-600">Experience</div>
-          <div className="flex items-center gap-1">
-            <EditableStatField
-              value={currentXP}
-              onUpdate={(val) => onUpdateXP(val, totalXP)}
-              className="text-lg font-black"
-              min={0}
-            />
-            <span className="text-sm">/</span>
-            <EditableStatField
-              value={totalXP}
-              onUpdate={(val) => onUpdateXP(currentXP, val)}
-              className="text-lg font-black"
-              min={1}
-            />
-          </div>
+      {/* Languages Section */}
+      <div className="mb-4">
+        <div className="border-2 border-black p-3 bg-white">
+          <div className="text-xs uppercase tracking-wider text-gray-600 mb-1">Languages</div>
+          <input
+            type="text"
+            value={languages}
+            onChange={(e) => onUpdateLanguages(e.target.value)}
+            className="w-full font-black text-sm bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+            placeholder="Enter languages..."
+          />
         </div>
-
-        <Button
-          onClick={onToggleLuckToken}
-          className={`h-14 border-4 border-black ${
-            luckTokenUsed 
-              ? 'bg-gray-300 text-gray-600 line-through' 
-              : 'bg-white text-black hover:bg-gray-100'
-          }`}
-        >
-          <Sparkles size={20} className="mr-2" />
-          <span className="font-black uppercase text-xs">
-            Luck Token {luckTokenUsed ? '(Used)' : '(Available)'}
-          </span>
-        </Button>
       </div>
 
       {/* Abilities Section */}
@@ -196,6 +189,42 @@ export function CharacterAttributesView({
             </ContextMenu>
           ))}
         </div>
+      </div>
+
+      {/* Luck Token and XP */}
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        <div className="h-14 border-4 border-black bg-white flex flex-col items-center justify-center">
+          <div className="text-xs uppercase tracking-wider text-gray-600">Experience</div>
+          <div className="flex items-center gap-1">
+            <EditableStatField
+              value={currentXP}
+              onUpdate={(val) => onUpdateXP(val, totalXP)}
+              className="text-lg font-black"
+              min={0}
+            />
+            <span className="text-sm">/</span>
+            <EditableStatField
+              value={totalXP}
+              onUpdate={(val) => onUpdateXP(currentXP, val)}
+              className="text-lg font-black"
+              min={1}
+            />
+          </div>
+        </div>
+
+        <Button
+          onClick={onToggleLuckToken}
+          className={`h-14 border-4 border-black ${
+            luckTokenUsed 
+              ? 'bg-gray-300 text-gray-600 line-through' 
+              : 'bg-white text-black hover:bg-gray-100'
+          }`}
+        >
+          <Sparkles size={20} className="mr-2" />
+          <span className="font-black uppercase text-xs">
+            Luck Token {luckTokenUsed ? '(Used)' : '(Available)'}
+          </span>
+        </Button>
       </div>
 
 
