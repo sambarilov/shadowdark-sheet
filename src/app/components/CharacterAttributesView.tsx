@@ -102,7 +102,7 @@ export function CharacterAttributesView({
       {rollResult && (
         <div 
           onClick={() => setRollResult(null)}
-          className="fixed top-1/10 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md"
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md"
         >
           <Dices className="inline-block mr-2" size={20} />
           {rollResult}
