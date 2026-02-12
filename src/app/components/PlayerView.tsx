@@ -29,6 +29,8 @@ interface Spell {
   id: string;
   name: string;
   level: number;
+  duration: string;
+  range: string;
   description: string;
   active: boolean;
 }
@@ -290,6 +292,11 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, onUpdate
                           </ContextMenuItem>
                         </ContextMenuContent>
                       </ContextMenu>
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">
+                      {spell.range && <span>Range: {spell.range}</span>}
+                      {spell.range && spell.duration && <span className="mx-2">|</span>}
+                      {spell.duration && <span>Duration: {spell.duration}</span>}
                     </div>
                     <p className="text-sm text-gray-600">{spell.description}</p>
                   </div>

@@ -24,6 +24,8 @@ interface Spell {
   id: string;
   name: string;
   level: number;
+  duration: string;
+  range: string;
   description: string;
   active: boolean;
 }
@@ -150,6 +152,8 @@ function App() {
       id: '1',
       name: 'Magic Missile',
       level: 1,
+      duration: 'Instant',
+      range: 'Far',
       description: '3 darts of magical force, 1d4+1 damage each',
       active: true
     },
@@ -157,6 +161,8 @@ function App() {
       id: '2',
       name: 'Shield',
       level: 1,
+      duration: '1 round',
+      range: 'Self',
       description: '+5 AC bonus until end of next turn',
       active: true
     },
@@ -164,6 +170,8 @@ function App() {
       id: '3',
       name: 'Fireball',
       level: 3,
+      duration: 'Instant',
+      range: 'Far',
       description: '6d6 fire damage in 20-foot radius',
       active: true
     }
@@ -314,7 +322,9 @@ function App() {
                 id: `spell-${index}`,
                 name: spellData.name,
                 level: spellData.tier,
-                description: `${spellData.range} | ${spellData.duration} | ${spellData.description}`,
+                duration: spellData.duration,
+                range: spellData.range,
+                description: spellData.description,
                 active: true
               });
             } else {
@@ -323,6 +333,8 @@ function App() {
                 id: `spell-${index}`,
                 name: spellName,
                 level: 1,
+                duration: '',
+                range: '',
                 description: 'Details not available',
                 active: true
               });

@@ -6,6 +6,8 @@ export interface SpellData {
   id: string;
   name: string;
   level: number;
+  duration: string;
+  range: string;
   description: string;
   active: boolean;
 }
@@ -19,6 +21,8 @@ interface EditSpellDialogProps {
 export function EditSpellDialog({ spell, onSave, onCancel }: EditSpellDialogProps) {
   const [name, setName] = useState(spell?.name || '');
   const [level, setLevel] = useState(spell?.level || 1);
+  const [duration, setDuration] = useState(spell?.duration || '');
+  const [range, setRange] = useState(spell?.range || '');
   const [description, setDescription] = useState(spell?.description || '');
 
   const handleSave = () => {
@@ -28,6 +32,8 @@ export function EditSpellDialog({ spell, onSave, onCancel }: EditSpellDialogProp
       id: spell?.id || `spell-${Date.now()}`,
       name: name.trim(),
       level,
+      duration: duration.trim(),
+      range: range.trim(),
       description: description.trim(),
       active: spell?.active ?? true
     };
@@ -66,11 +72,31 @@ export function EditSpellDialog({ spell, onSave, onCancel }: EditSpellDialogProp
           </div>
 
           <div>
+            <label className="text-sm font-bold mb-1 block">Duration</label>
+            <Input
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="e.g., Instant, 1 round, 10 minutes"
+              className="border-2 border-black"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-bold mb-1 block">Range</label>
+            <Input
+              value={range}
+              onChange={(e) => setRange(e.target.value)}
+              placeholder="e.g., Self, Touch, Near, Far"
+              className="border-2 border-black"
+            />
+          </div>
+
+          <div>
             <label className="text-sm font-bold mb-1 block">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Range, duration, effect..."
+              placeholder="Effect details..."
               className="w-full border-2 border-black p-2 min-h-[100px]"
             />
           </div>
