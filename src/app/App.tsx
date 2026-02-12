@@ -299,19 +299,26 @@ function App() {
             'Rations': 'consumable',
             'Shield': 'shield',
             'Leather armor': 'armor',
+            'Oil, flask': 'consumable',
             'Chainmail': 'armor',
             'Plate armor': 'armor',
             'Mithral chainmail': 'armor',
             'Mithral shield': 'shield',
           }
 
+          const itemType = (item: any): ItemType => {
+            if (item.type == 'weapon') return 'weapon';
+           
+            return ITEMS_PER_TYPE[item.name] || 'gear';
+          }
+
           const newInventory: ItemData[] = json.gear.map((item: any) => {
             const itemData: ItemData = {
               id: item.instanceId || `item-${Math.random()}`,
               name: item.name || 'Unknown Item',
-              type: ITEMS_PER_TYPE[item.name] ?? 'gear',
+              type: itemType(item),
               equipped: false,
-              description: `${item.quantity || 1}x`,
+              description: item.description,
               quantity: item.quantity || 1,
               value: { 
                 gold: item.currency === 'gp' ? item.cost : 0,
@@ -326,6 +333,12 @@ function App() {
             if (item.totalUnits !== undefined) {
               itemData.totalUnits = item.totalUnits;
               itemData.currentUnits = item.totalUnits;
+              // Calculate unitsPerSlot if not present
+              if (item.unitsPerSlot === undefined) {
+                itemData.unitsPerSlot = item.totalUnits / (item.slots || 1);
+              } else {
+                itemData.unitsPerSlot = item.unitsPerSlot;
+              }
             }
             
             return itemData;
@@ -529,29 +542,21 @@ function App() {
     setInventory((items: ItemData[]) => 
       items.map((item: ItemData) => {
         if (item.id === id) {
-          // New system: use totalUnits/currentUnits/quantity
-          if (item.totalUnits !== undefined && item.currentUnits !== undefined && item.quantity !== undefined) {
+          // Use unitsPerSlot/currentUnits/quantity system
+          if (item.unitsPerSlot !== undefined && item.currentUnits !== undefined && item.quantity !== undefined) {
             let newCurrentUnits = item.currentUnits - 1;
-            let newQuantity = item.quantity;
+            let newQuantity = Math.ceil(newCurrentUnits / item.unitsPerSlot);
             
-            // If currentUnits reaches 0, decrease quantity and reset currentUnits
-            if (newCurrentUnits <= 0) {
-              newQuantity = item.quantity - 1;
-              
-              // If quantity reaches 0, delete the item
-              if (newQuantity <= 0) {
-                toast.success(`${item.name} consumed!`);
-                return null;
-              }
-              
-              // Reset currentUnits to totalUnits for the next quantity
-              newCurrentUnits = item.totalUnits;
+            if (newQuantity < 1) {
+              toast.success(`${item.name} consumed!`);
+              return null;
             }
             
             // Calculate total remaining units across all quantities
-            const totalRemaining = (newQuantity - 1) * item.totalUnits + newCurrentUnits;
+            // Full quantities (newQuantity - 1) plus the partial current quantity
+            const totalRemaining = (newQuantity - 1) * item.unitsPerSlot + newCurrentUnits;
             toast.success(`Used ${item.name}. ${totalRemaining} unit${totalRemaining !== 1 ? 's' : ''} remaining.`);
-            return { ...item, currentUnits: newCurrentUnits, quantity: newQuantity };
+            return { ...item, slots: newQuantity, currentUnits: newCurrentUnits, quantity: newQuantity };
           }
         }
         return item;

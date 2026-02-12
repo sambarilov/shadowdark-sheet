@@ -31,6 +31,7 @@ export interface ItemData {
   quantity?: number;
   totalUnits?: number;
   currentUnits?: number;
+  unitsPerSlot?: number;
 }
 
 interface EditItemDialogProps {
@@ -63,6 +64,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
   const [quantity, setQuantity] = useState(item?.quantity || 1);
   const [totalUnits, setTotalUnits] = useState(item?.totalUnits || 1);
   const [currentUnits, setCurrentUnits] = useState(item?.currentUnits || item?.totalUnits || 1);
+  const [unitsPerSlot, setUnitsPerSlot] = useState(item?.unitsPerSlot || 1);
 
   // Update form fields when item changes
   useEffect(() => {
@@ -81,6 +83,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setQuantity(item.quantity || 1);
       setTotalUnits(item.totalUnits || 1);
       setCurrentUnits(item.currentUnits || item.totalUnits || 1);
+      setUnitsPerSlot(item.unitsPerSlot || (item.totalUnits || 1) / (item.slots || 1));
     } else {
       // Reset form for new item
       setName('');
@@ -97,6 +100,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setQuantity(1);
       setTotalUnits(1);
       setCurrentUnits(1);
+      setUnitsPerSlot(1);
     }
   }, [item]);
 
@@ -123,6 +127,7 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         itemData.quantity = quantity;
         itemData.totalUnits = totalUnits;
         itemData.currentUnits = currentUnits;
+        itemData.unitsPerSlot = totalUnits / slots;
       }
 
       onSave(itemData);
