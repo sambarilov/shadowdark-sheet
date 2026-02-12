@@ -185,6 +185,7 @@ function App() {
         damage: item.damage || undefined,
         weaponAbility: item.weaponAbility || undefined,
         attackBonus: item.attackBonus || undefined,
+        damageBonus: item.damageBonus || undefined,
         armorAC: item.armorAC || undefined,
         shieldACBonus: item.shieldACBonus || undefined,
         totalUnits: item.totalUnits || undefined,
@@ -467,6 +468,8 @@ function App() {
             itemData.weaponAbility = item.weaponAbility || 'STR';
             itemData.attackBonus = item.attackBonus || 0;
           }
+          // Always check for damageBonus in the imported data
+          itemData.damageBonus = item.damageBonus || undefined;
         } else if (itemType(item) === 'armor') {
           // Look up armor stats
           const armorStats = ARMOR_STATS[item.name];
@@ -487,6 +490,7 @@ function App() {
           // Non-weapon/armor/shield items can still have these if provided
           itemData.damage = item.damage || undefined;
           itemData.attackBonus = item.attackBonus || undefined;
+          itemData.damageBonus = item.damageBonus || undefined;
           itemData.weaponAbility = item.weaponAbility || undefined;
           itemData.armorAC = item.armorAC || undefined;
           itemData.shieldACBonus = item.shieldACBonus || undefined;
