@@ -43,6 +43,7 @@ function App() {
   const [hp, setHp] = useState(24);
   const [maxHp, setMaxHp] = useState(32);
   const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
+  const [notes, setNotes] = useState('');
   
   const [coins, setCoins] = useState({
     gold: 45,
@@ -838,12 +839,14 @@ function App() {
                     spells={spells}
                     abilities={abilities}
                     weaponBonuses={weaponBonuses}
+                    notes={notes}
                     onUpdateHP={setHp}
                     onUpdateMaxHP={setMaxHp}
                     onToggleSpell={handleToggleSpell}
                     onAddSpell={handleAddSpell}
                     onRemoveSpell={handleRemoveSpell}
                     onUpdateWeaponBonuses={setWeaponBonuses}
+                    onUpdateNotes={setNotes}
                   />
                 </div>
 

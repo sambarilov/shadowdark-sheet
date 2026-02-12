@@ -45,15 +45,17 @@ interface PlayerViewProps {
   spells: Spell[];
   abilities: Ability[];
   weaponBonuses: Record<string, number>;
+  notes: string;
   onUpdateHP: (hp: number) => void;
   onUpdateMaxHP: (maxHp: number) => void;
   onToggleSpell: (id: string) => void;
   onAddSpell: (spell: Spell) => void;
   onRemoveSpell: (id: string) => void;
   onUpdateWeaponBonuses: (bonuses: Record<string, number>) => void;
+  onUpdateNotes: (notes: string) => void;
 }
 
-export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, weaponBonuses, onUpdateHP, onUpdateMaxHP, onToggleSpell, onAddSpell, onRemoveSpell, onUpdateWeaponBonuses }: PlayerViewProps) {
+export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, weaponBonuses, notes, onUpdateHP, onUpdateMaxHP, onToggleSpell, onAddSpell, onRemoveSpell, onUpdateWeaponBonuses, onUpdateNotes }: PlayerViewProps) {
   const [rollResult, setRollResult] = useState<string | null>(null);
   const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
   const [showSpellDialog, setShowSpellDialog] = useState(false);
@@ -226,6 +228,17 @@ export function PlayerView({ hp, maxHp, ac, weapons, spells, abilities, weaponBo
             ))
           )}
         </div>
+      </div>
+
+      {/* Notes Section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-black uppercase mb-3">Notes</h2>
+        <textarea
+          value={notes}
+          onChange={(e) => onUpdateNotes(e.target.value)}
+          placeholder="Add notes here..."
+          className="w-full min-h-[100px] p-3 border-2 border-black bg-white resize-y font-mono text-sm"
+        />
       </div>
 
       {/* Spells Section */}
