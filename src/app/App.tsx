@@ -14,6 +14,7 @@ import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import spellsData from '../../assets/json/spells.json';
 import { ItemType } from './components/EditItemDialog';
+import { ImportDialog } from './components/dialogs/ImportDialog';
 
 // Weapon stats lookup database
 const WEAPON_STATS: Record<string, { damage: string; weaponAbility?: string; attackBonus?: number }> = {
@@ -288,17 +289,16 @@ function App() {
     setShowImportDialog(true);
   };
 
-  const handleImportFromPaste = () => {
-    if (!importJsonText.trim()) {
+  const handleImportFromPaste = (json: any) => {
+    if (!json.trim()) {
       toast.error('Please paste JSON content');
       return;
     }
     
     try {
-      const json = JSON.parse(importJsonText);
-      processImportData(json);
+      const parsedJson = JSON.parse(json);
+      processImportData(parsedJson);
       setShowImportDialog(false);
-      setImportJsonText('');
     } catch (error) {
       toast.error('Invalid JSON format');
     }
@@ -1043,54 +1043,11 @@ function App() {
         )}
       </div>
 
-      {/* Import Dialog */}
-      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <DialogContent className="border-4 border-black max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase">Import Character</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="font-black mb-2 block">Upload File</Label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={(e) => {
-                  importCharacter(e);
-                  setShowImportDialog(false);
-                }}
-                className="block w-full text-sm border-2 border-black p-2"
-              />
-            </div>
-            <div className="text-center font-black">OR</div>
-            <div>
-              <Label className="font-black mb-2 block">Paste JSON</Label>
-              <Textarea
-                value={importJsonText}
-                onChange={(e) => setImportJsonText(e.target.value)}
-                placeholder="Paste your character JSON here..."
-                className="border-2 border-black font-mono text-xs h-64"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => setShowImportDialog(false)}
-              variant="outline"
-              className="border-2 border-black"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleImportFromPaste}
-              className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-            >
-              Import from Paste
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ImportDialog
+        show={showImportDialog}
+        onClose={() => setShowImportDialog(false)}
+        onSubmit={handleImportFromPaste}
+      />
 
       {/* Export Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>

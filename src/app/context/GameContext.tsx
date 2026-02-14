@@ -211,88 +211,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     updateNotes: (notes) => 
       dispatch({ type: 'UPDATE_NOTES', payload: notes }),
     
-    importCharacter: (file: File) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        if (text) {
-          try {
-            const lines = text.split('\n').map(line => 
-              line.split(',').map(field => field.replace(/^"|"$/g, '').replace(/""/g, '"'))
-            );
-
-            // Find character info section
-            const charIndex = lines.findIndex(line => line[0] === 'Character Name');
-            if (charIndex >= 0 && charIndex + 1 < lines.length) {
-              const charData = lines[charIndex + 1];
-              dispatch({
-                type: 'UPDATE_CHARACTER_ATTRIBUTES',
-                payload: {
-                  name: charData[0],
-                  level: parseInt(charData[1]) || 1,
-                  hitPoints: parseInt(charData[2]) || 0,
-                  armorClass: parseInt(charData[3]) || 10
-                }
-              });
-            }
-          } catch (error) {
-            console.error('Error parsing CSV:', error);
-          }
-        }
-      };
-      reader.readAsText(file);
+    importCharacter: (jsonText: string) => {
     },
     
     exportCharacter: () => {
-      try {
-        const csvContent = [
-          ['Character Name', 'Level', 'Hit Points', 'Armor Class'],
-          [
-            state.character.name || 'Unnamed',
-            state.character.level?.toString() || '1',
-            state.character.hitPoints?.toString() || '0',
-            state.character.armorClass?.toString() || '10'
-          ],
-          ['', '', '', ''],
-          ['Abilities'],
-          ['Ability', 'Score', 'Bonus'],
-          ...state.abilities.map(ability => [ability.name, ability.score.toString(), ability.bonus.toString()]),
-          ['', '', ''],
-          ['Talents'],
-          ['Name', 'Description'],
-          ...state.talents.map(talent => [talent.name, talent.description]),
-          ['', ''],
-          ['Spells'],
-          ['Name', 'Description'],
-          ...state.spells.map(spell => [spell.name, spell.description]),
-          ['', ''],
-          ['Inventory'],
-          ['Name', 'Category', 'Quantity'],
-          ...state.inventory.map(item => [
-            item.name,
-            item.type || '',
-            item.quantity?.toString() || '1'
-          ])
-        ];
-
-        const csvString = csvContent.map(row => 
-          row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
-        ).join('\n');
-
-        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        if (link.download !== undefined) {
-          const url = URL.createObjectURL(blob);
-          link.setAttribute('href', url);
-          link.setAttribute('download', `${state.character.name || 'character'}.csv`);
-          link.style.visibility = 'hidden';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      } catch (error) {
-        console.error('Error exporting character:', error);
-      }
     }
   };
 
