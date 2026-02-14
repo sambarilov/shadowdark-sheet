@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import spellsData from '../../assets/json/spells.json';
 import { ItemType } from './components/EditItemDialog';
 import { ImportDialog } from './components/dialogs/ImportDialog';
+import { ExportDialog } from './components/dialogs/ExportDialog';
 
 // Weapon stats lookup database
 const WEAPON_STATS: Record<string, { damage: string; weaponAbility?: string; attackBonus?: number }> = {
@@ -1049,46 +1050,13 @@ function App() {
         onSubmit={handleImportFromPaste}
       />
 
-      {/* Export Dialog */}
-      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-        <DialogContent className="border-4 border-black max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase">Export Character</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="font-black mb-2 block">Character JSON</Label>
-              <Textarea
-                value={exportJsonText}
-                readOnly
-                className="border-2 border-black font-mono text-xs h-64"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => setShowExportDialog(false)}
-              variant="outline"
-              className="border-2 border-black"
-            >
-              Close
-            </Button>
-            <Button
-              onClick={handleCopyExport}
-              variant="outline"
-              className="border-2 border-black"
-            >
-              Copy to Clipboard
-            </Button>
-            <Button
-              onClick={handleDownloadExport}
-              className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-            >
-              Download File
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExportDialog
+        show={showExportDialog}
+        onClose={() => setShowExportDialog(false)}
+        text={exportJsonText}
+        onDownload={handleDownloadExport}
+        onCopy={handleCopyExport}
+      />
 
       <Toaster richColors position="top-center" />
     </div>
