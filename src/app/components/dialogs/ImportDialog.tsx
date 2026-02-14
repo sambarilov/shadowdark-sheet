@@ -41,7 +41,6 @@ export const ImportDialog = (props: ImportDialogProps) => {
                   if (e.target.files && e.target.files.length > 0) {
                     extractJsonFromFile(e.target.files[0]);
                   }
-                  onClose();
                 }}
                 className="block w-full text-sm border-2 border-black p-2"
               />
@@ -66,10 +65,13 @@ export const ImportDialog = (props: ImportDialogProps) => {
               Cancel
             </Button>
             <Button
-              onClick={() => onSubmit(jsonText)}
+              onClick={() => {
+                onSubmit(jsonText);
+                setJsonText('');
+              }}
               className="bg-black text-white hover:bg-gray-800 border-2 border-black"
             >
-              Import from Paste
+              Import
             </Button>
           </DialogFooter>
         </DialogContent>
