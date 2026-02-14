@@ -76,7 +76,7 @@ export interface GameState {
   talents: Talent[];
   languages: string;
   currentXP: number;
-  totalXP: number;
+  xpToNextLevel: number;
   luckTokenUsed: boolean;
   
   // Combat Stats

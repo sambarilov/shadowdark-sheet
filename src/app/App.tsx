@@ -131,7 +131,7 @@ function App() {
       background, 
       alignment,
       currentXP,
-      totalXP,
+      xpToNextLevel,
       languages,
       luckTokenUsed
     },
@@ -223,7 +223,7 @@ function App() {
         level: level,
         levels: [], // Empty for now, could be populated if tracking level history
         XP: currentXP,
-        totalXP: totalXP,
+        totalXP: xpToNextLevel,
         ambitionTalentLevel: {
           level: 1,
           talentRolledDesc: '',
@@ -842,13 +842,13 @@ function App() {
                     talents={talents}
                     luckTokenUsed={luckTokenUsed}
                     currentXP={currentXP}
-                    totalXP={totalXP}
+                    xpToNextLevel={xpToNextLevel}
                     languages={languages}
                     characterImported={characterImported}
                     onToggleLuckToken={() => updateCharacterAttribute('luckTokenUsed', !luckTokenUsed)}
                     onUpdateXP={(current, total) => {
                       updateCharacterAttribute('currentXP', current);
-                      updateCharacterAttribute('totalXP', total);
+                      updateCharacterAttribute('xpToNextLevel', total);
                     }}
                     onUpdateLanguages={(value) => updateCharacterAttribute('languages', value)}
                     onUpdateAttribute={updateCharacterAttribute}

@@ -43,11 +43,11 @@ interface CharacterAttributesViewProps {
   abilities: Ability[];
   luckTokenUsed: boolean;
   currentXP: number;
-  totalXP: number;
+  xpToNextLevel: number;
   languages: string;
   characterImported: boolean;
   onToggleLuckToken: () => void;
-  onUpdateXP: (current: number, total: number) => void;
+  onUpdateXP: (current: number, xpToNextLevel: number) => void;
   onUpdateLanguages: (languages: string) => void;
   onUpdateAttribute: (name: string, value: string) => void;
   onUpdateAbilities: (abilities: Ability[]) => void;
@@ -63,7 +63,7 @@ export function CharacterAttributesView({
   abilities,
   luckTokenUsed,
   currentXP,
-  totalXP,
+  xpToNextLevel,
   languages,
   characterImported,
   onToggleLuckToken,
@@ -229,13 +229,13 @@ export function CharacterAttributesView({
           <div className="flex items-center gap-1">
             <EditableStatField
               value={currentXP}
-              onUpdate={(val) => onUpdateXP(val, totalXP)}
+              onUpdate={(val) => onUpdateXP(val, xpToNextLevel)}
               className="text-lg font-black"
               min={0}
             />
             <span className="text-sm">/</span>
             <EditableStatField
-              value={totalXP}
+              value={xpToNextLevel}
               onUpdate={(val) => onUpdateXP(currentXP, val)}
               className="text-lg font-black"
               min={1}

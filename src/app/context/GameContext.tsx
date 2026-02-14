@@ -20,7 +20,7 @@ const initialState: GameState = {
   talents: [],
   languages: '',
   currentXP: 0,
-  totalXP: 10,
+  xpToNextLevel: 10,
   luckTokenUsed: false,
   hp: 0,
   maxHp: 0,
@@ -73,7 +73,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, languages: action.payload };
     
     case 'UPDATE_XP':
-      return { ...state, currentXP: action.payload.current, totalXP: action.payload.total };
+      return { ...state, currentXP: action.payload.current, xpToNextLevel: action.payload.total };
     
     case 'TOGGLE_LUCK_TOKEN':
       return { ...state, luckTokenUsed: !state.luckTokenUsed };
@@ -140,7 +140,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         level: payload.level,
         background: payload.background,
         alignment: payload.alignment,
-        characterImported: true 
+        languages: payload.languages,
+        currentXP: payload.XP,
+        xpToNextLevel: payload.level * 10, 
+        luckTokenUsed: false,
+        characterImported: true
       };
     
     case 'EXPORT_CHARACTER':
