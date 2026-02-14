@@ -324,6 +324,10 @@ export function CharacterAttributesView({
           setEditingTalent(undefined);
         }}
         onSave={(talent) => {
+          if (editingTalent) {
+            // If editing, remove the old talent first
+            onRemoveTalent(editingTalent.id);
+          }
           onAddTalent(talent);
           setShowTalentDialog(false);
           setEditingTalent(undefined);

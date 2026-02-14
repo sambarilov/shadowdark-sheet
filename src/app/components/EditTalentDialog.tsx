@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -14,8 +14,16 @@ interface EditTalentDialogProps {
 }
 
 export function EditTalentDialog({ open, onClose, onSave, talent }: EditTalentDialogProps) {
-  const [name, setName] = useState(talent?.name || '');
-  const [description, setDescription] = useState(talent?.description || '');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  // Update form state when talent changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      setName(talent?.name || '');
+      setDescription(talent?.description || '');
+    }
+  }, [open, talent]);
 
   const handleSave = () => {
     if (name.trim() && description.trim()) {
