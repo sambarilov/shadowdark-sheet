@@ -51,14 +51,13 @@ interface PlayerViewProps {
   onUpdateMaxHP: (maxHp: number) => void;
   onUpdateAcBonus: (acBonus: number) => void;
   onToggleSpell: (id: string) => void;
-  onAddSpell: (spell: Spell) => void;
   onRemoveSpell: (id: string) => void;
   onUpdateWeaponBonuses: (bonuses: Record<string, number>) => void;
   onUpdateNotes: (notes: string) => void;  onOpenSpellDialog: (spell?: Spell) => void;
   onShowRollResult: (result: string) => void;
 }
 
-export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities, weaponBonuses, notes, onUpdateHP, onUpdateMaxHP, onUpdateAcBonus, onToggleSpell, onAddSpell, onRemoveSpell, onUpdateWeaponBonuses, onUpdateNotes, onOpenSpellDialog, onShowRollResult }: PlayerViewProps) {
+export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities, weaponBonuses, notes, onUpdateHP, onUpdateMaxHP, onUpdateAcBonus, onToggleSpell, onRemoveSpell, onUpdateWeaponBonuses, onUpdateNotes, onOpenSpellDialog, onShowRollResult }: PlayerViewProps) {
   const [weaponAbilities, setWeaponAbilities] = useState<Record<string, string>>({});
 
   const rollDice = (sides: number) => {
@@ -230,14 +229,14 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
                     <EditableStatField
                       value={weaponBonuses[weapon.id] ?? weapon.attackBonus ?? 0}
                       onUpdate={(value) => onUpdateWeaponBonuses({ ...weaponBonuses, [weapon.id]: value })}
-                      className="text-s text-right w-8"
+                      className="text-sm text-right w-8"
                       min={-99}
                     />
                     <span>+</span>
                     <EditableAbilityField
                       value={weaponAbilities[weapon.id] || weapon.weaponAbility}
                       onUpdate={(value) => setWeaponAbilities({ ...weaponAbilities, [weapon.id]: value })}
-                      className="text-s"
+                      className="text-sm"
                     />
                   </div>
                   <ContextMenu>
@@ -321,27 +320,19 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
                           LVL {spell.level}
                         </span>
                       </div>
-                      <ContextMenu>
-                        <ContextMenuTrigger asChild>
-                          <Button
-                            onClick={() => handleCastingRoll(spell)}
-                            className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-                            size="sm"
-                            disabled={!spell.active}
-                          >
-                            <Dices size={16} className="mr-1" />
-                            Cast
-                          </Button>
-                        </ContextMenuTrigger>
-                        <ContextMenuContent>
-                          <ContextMenuItem onClick={() => handleCastingRoll(spell, 'advantage')}>
-                            Roll with Advantage
-                          </ContextMenuItem>
-                          <ContextMenuItem onClick={() => handleCastingRoll(spell, 'disadvantage')}>
-                            Roll with Disadvantage
-                          </ContextMenuItem>
-                        </ContextMenuContent>
-                      </ContextMenu>
+                      <Button
+                        onClick={() => handleCastingRoll(spell)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        className="bg-black text-white hover:bg-gray-800 border-2 border-black"
+                        size="sm"
+                        disabled={!spell.active}
+                      >
+                        <Dices size={16} className="mr-1" />
+                        Cast
+                      </Button>
                     </div>
                     <div className="text-xs text-gray-600 mb-1">
                       {spell.range && <span>Range: {spell.range}</span>}
