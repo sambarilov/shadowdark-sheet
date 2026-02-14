@@ -1,24 +1,22 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react';
-import { GameState, GameActions, CharacterAttribute, Ability, Talent, Spell, ItemData, Coins } from '../types';
+import { GameState, GameActions, Ability, Talent, Spell, ItemData, Coins, ShadowdarklingsCharacter } from '../types';
 
 // Initial state
 const initialState: GameState = {
-  characterAttributes: [
-    { name: 'Name', value: '' },
-    { name: 'Ancestry', value: '' },
-    { name: 'Class', value: '' },
-    { name: 'Level', value: '1' },
-    { name: 'Background', value: '' },
-    { name: 'Alignment', value: '' }
-  ],
-  abilities: [
-    { name: 'Strength', shortName: 'STR', score: 10, bonus: 0 },
-    { name: 'Dexterity', shortName: 'DEX', score: 10, bonus: 0 },
-    { name: 'Constitution', shortName: 'CON', score: 10, bonus: 0 },
-    { name: 'Intelligence', shortName: 'INT', score: 10, bonus: 0 },
-    { name: 'Wisdom', shortName: 'WIS', score: 10, bonus: 0 },
-    { name: 'Charisma', shortName: 'CHA', score: 10, bonus: 0 }
-  ],
+  name: '',
+  ancestry: '',
+  class: '',
+  level: 1,
+  background: '',
+  alignment: '',
+  abilities: {
+    str: { name: 'Strength', shortName: 'STR', score: 10, bonus: 0 },
+    dex: { name: 'Dexterity', shortName: 'DEX', score: 10, bonus: 0 },
+    con: { name: 'Constitution', shortName: 'CON', score: 10, bonus: 0 },
+    int: { name: 'Intelligence', shortName: 'INT', score: 10, bonus: 0 },
+    wis: { name: 'Wisdom', shortName: 'WIS', score: 10, bonus: 0 },
+    cha: { name: 'Charisma', shortName: 'CHA', score: 10, bonus: 0 }
+  },
   talents: [],
   languages: '',
   currentXP: 0,
@@ -40,7 +38,7 @@ const initialState: GameState = {
 
 // Action types
 type GameAction =
-  | { type: 'UPDATE_CHARACTER_ATTRIBUTES'; payload: CharacterAttribute[] }
+  | { type: 'UPDATE_CHARACTER_ATTRIBUTE'; payload: { name: string; value: string | number | boolean } }
   | { type: 'UPDATE_ABILITIES'; payload: Ability[] }
   | { type: 'UPDATE_LANGUAGES'; payload: string }
   | { type: 'UPDATE_XP'; payload: { current: number; total: number } }
@@ -59,17 +57,17 @@ type GameAction =
   | { type: 'UPDATE_ITEM'; payload: { id: string; updates: Partial<ItemData> } }
   | { type: 'UPDATE_COINS'; payload: Coins }
   | { type: 'UPDATE_NOTES'; payload: string }
-  | { type: 'IMPORT_CHARACTER' }
+  | { type: 'IMPORT_CHARACTER'; payload: ShadowdarklingsCharacter }
   | { type: 'EXPORT_CHARACTER' };
 
 // Reducer function
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'UPDATE_CHARACTER_ATTRIBUTES':
-      return { ...state, characterAttributes: action.payload };
+    case 'UPDATE_CHARACTER_ATTRIBUTE':
+      return { ...state,  [action.payload.name]: action.payload.value };
     
     case 'UPDATE_ABILITIES':
-      return { ...state, abilities: action.payload };
+      return { ...state,  abilities: { ...state.abilities, ...action.payload } };
     
     case 'UPDATE_LANGUAGES':
       return { ...state, languages: action.payload };
@@ -133,7 +131,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, notes: action.payload };
     
     case 'IMPORT_CHARACTER':
-      return { ...state, characterImported: true };
+      const { payload } = action;
+      return { 
+        ...state, 
+        name: payload.name,
+        ancestry: payload.ancestry,
+        class: payload.class,
+        level: payload.level,
+        background: payload.background,
+        alignment: payload.alignment,
+        characterImported: true 
+      };
     
     case 'EXPORT_CHARACTER':
       return state; // This could trigger side effects
@@ -154,8 +162,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
   const actions: GameActions = {
-    updateCharacterAttributes: (attributes) => 
-      dispatch({ type: 'UPDATE_CHARACTER_ATTRIBUTES', payload: attributes }),
+    updateCharacterAttribute: (name, value) => 
+      dispatch({ type: 'UPDATE_CHARACTER_ATTRIBUTE', payload: { name, value } }),
     
     updateAbilities: (abilities) => 
       dispatch({ type: 'UPDATE_ABILITIES', payload: abilities }),
@@ -211,10 +219,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     updateNotes: (notes) => 
       dispatch({ type: 'UPDATE_NOTES', payload: notes }),
     
-    importCharacter: (jsonText: string) => {
+    importCharacter: (json: ShadowdarklingsCharacter) => {
+      dispatch({ type: 'IMPORT_CHARACTER', payload: json });
     },
     
     exportCharacter: () => {
+      return ''
     }
   };
 

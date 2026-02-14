@@ -10,6 +10,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from './ui/context-menu';
+import { Attribute } from './character/Attribute';
 
 export interface CharacterAttribute {
   name: string;
@@ -30,7 +31,14 @@ export interface Ability {
 }
 
 interface CharacterAttributesViewProps {
-  attributes: CharacterAttribute[];
+  attributes: {
+    name: string;
+    class: string;
+    ancestry: string;
+    level: number;
+    background: string;
+    alignment: string;
+  };
   talents: Talent[];
   abilities: Ability[];
   luckTokenUsed: boolean;
@@ -41,7 +49,7 @@ interface CharacterAttributesViewProps {
   onToggleLuckToken: () => void;
   onUpdateXP: (current: number, total: number) => void;
   onUpdateLanguages: (languages: string) => void;
-  onUpdateAttributes: (attributes: CharacterAttribute[]) => void;
+  onUpdateAttribute: (name: string, value: string) => void;
   onUpdateAbilities: (abilities: Ability[]) => void;
   onAddTalent: (talent: Talent) => void;
   onRemoveTalent: (id: string) => void;
@@ -61,7 +69,7 @@ export function CharacterAttributesView({
   onToggleLuckToken,
   onUpdateXP,
   onUpdateLanguages,
-  onUpdateAttributes,
+  onUpdateAttribute,
   onUpdateAbilities,
   onAddTalent,
   onRemoveTalent,
@@ -148,22 +156,13 @@ export function CharacterAttributesView({
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {attributes.map((attr, index) => (
-            <div key={index} className="border-2 border-black p-2 bg-white">
-              <div className="text-xs uppercase tracking-wider text-gray-600 mb-1">
-                {attr.name}
-              </div>
-              <input
-                type="text"
-                value={attr.value}
-                onChange={(e) => {
-                  const newAttributes = [...attributes];
-                  newAttributes[index] = { ...attr, value: e.target.value };
-                  onUpdateAttributes(newAttributes);
-                }}
-                className="w-full font-black text-sm bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+          {Object.keys(attributes).map((key: string, index: number) => (
+            <Attribute
+              key={index}
+              name={key}
+              value={attributes[key as keyof typeof attributes]}
+              onChange={onUpdateAttribute}
               />
-            </div>
           ))}
         </div>
       </div>
@@ -324,10 +323,6 @@ export function CharacterAttributesView({
           setEditingTalent(undefined);
         }}
         onSave={(talent) => {
-          if (editingTalent) {
-            // If editing, remove the old talent first
-            onRemoveTalent(editingTalent.id);
-          }
           onAddTalent(talent);
           setShowTalentDialog(false);
           setEditingTalent(undefined);

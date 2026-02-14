@@ -2,20 +2,17 @@ import { useState, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { PlayerView } from './components/PlayerView';
 import { InventoryView, type ItemData } from './components/InventoryView';
-import { CharacterAttributesView, type CharacterAttribute, type Talent, type Ability } from './components/CharacterAttributesView';
+import { CharacterAttributesView, type Talent, type Ability } from './components/CharacterAttributesView';
 import { ShopView } from './components/ShopView';
 import { DiceRollerDrawer } from './components/DiceRollerDrawer';
 import { EditSpellDialog } from './components/EditSpellDialog';
-import { Button } from './components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './components/ui/dialog';
-import { Textarea } from './components/ui/textarea';
-import { Label } from './components/ui/label';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import spellsData from '../../assets/json/spells.json';
 import { ItemType } from './components/EditItemDialog';
 import { ImportDialog } from './components/dialogs/ImportDialog';
 import { ExportDialog } from './components/dialogs/ExportDialog';
+import { useGame } from './context/GameContext';
 
 // Weapon stats lookup database
 const WEAPON_STATS: Record<string, { damage: string; weaponAbility?: string; attackBonus?: number }> = {
@@ -78,7 +75,6 @@ interface Spell {
 }
 
 function App() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('attributes');
   const [showShop, setShowShop] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
@@ -90,11 +86,11 @@ function App() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [importJsonText, setImportJsonText] = useState('');
   const [exportJsonText, setExportJsonText] = useState('');
-  const [luckTokenUsed, setLuckTokenUsed] = useState(false);
+  // const [luckTokenUsed, setLuckTokenUsed] = useState(false);
   const [characterImported, setCharacterImported] = useState(false);
-  const [currentXP, setCurrentXP] = useState(0);
-  const [totalXP, setTotalXP] = useState(10);
-  const [languages, setLanguages] = useState('');
+  // const [currentXP, setCurrentXP] = useState(0);
+  // const [totalXP, setTotalXP] = useState(10);
+  // const [languages, setLanguages] = useState('');
   const [hp, setHp] = useState(0);
   const [maxHp, setMaxHp] = useState(0);
   const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
@@ -126,19 +122,30 @@ function App() {
 
   const [shopItems, setShopItems] = useState<ItemData[]>([]);
 
-  const [characterAttributes, setCharacterAttributes] = useState<CharacterAttribute[]>([
-    { name: 'Name', value: '' },
-    { name: 'Ancestry', value: '' },
-    { name: 'Class', value: '' },
-    { name: 'Level', value: '1' },
-    { name: 'Background', value: '' },
-    { name: 'Alignment', value: '' }
-  ]);
+  const {
+    state: {
+      name, 
+      ancestry, 
+      class: characterClass, 
+      level, 
+      background, 
+      alignment,
+      currentXP,
+      totalXP,
+      languages,
+      luckTokenUsed
+    },
+    actions: {
+      updateCharacterAttribute,
+      importCharacter,
+      exportCharacter
+    }
+  } = useGame();
 
-  const exportCharacter = () => {
+  const _exportCharacter = () => {
     try {
       // Get character name
-      const characterName = characterAttributes.find(attr => attr.name === 'Name')?.value || 'Character';
+      const characterName = name
       
       // Build stats object
       const stats: Record<string, number> = {};
@@ -211,9 +218,9 @@ function App() {
         name: characterName,
         stats,
         rolledStats: { ...stats },
-        ancestry: characterAttributes.find(attr => attr.name === 'Ancestry')?.value || 'Unknown',
-        class: characterAttributes.find(attr => attr.name === 'Class')?.value || 'Unknown',
-        level: parseInt(characterAttributes.find(attr => attr.name === 'Level')?.value || '1'),
+        ancestry: ancestry,
+        class: characterClass,
+        level: level,
         levels: [], // Empty for now, could be populated if tracking level history
         XP: currentXP,
         totalXP: totalXP,
@@ -228,8 +235,8 @@ function App() {
           stoutHitPointRoll: 0
         },
         title: '',
-        alignment: characterAttributes.find(attr => attr.name === 'Alignment')?.value || 'Neutral',
-        background: characterAttributes.find(attr => attr.name === 'Background')?.value || 'Unknown',
+        alignment: alignment,
+        background: background,
         deity: '',
         maxHitPoints: maxHp,
         armorClass: calculatedAC,
@@ -263,7 +270,7 @@ function App() {
   };
 
   const handleDownloadExport = () => {
-    const characterName = characterAttributes.find(attr => attr.name === 'Name')?.value || 'Character';
+    const characterName = name
     const blob = new Blob([exportJsonText], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -298,7 +305,8 @@ function App() {
     
     try {
       const parsedJson = JSON.parse(json);
-      processImportData(parsedJson);
+      processImportData(parsedJson); // TODO: this should go eventually
+      importCharacter(parsedJson);
       setShowImportDialog(false);
     } catch (error) {
       toast.error('Invalid JSON format');
@@ -306,16 +314,6 @@ function App() {
   };
 
   const processImportData = (json: any) => {
-    // Map character attributes
-    setCharacterAttributes([
-      { name: 'Name', value: json.name || 'Unknown' },
-      { name: 'Ancestry', value: json.ancestry || 'Unknown' },
-      { name: 'Class', value: json.class || 'Unknown' },
-      { name: 'Level', value: json.level?.toString() || '1' },
-      { name: 'Background', value: json.background || 'Unknown' },
-      { name: 'Alignment', value: json.alignment || 'Neutral' }
-    ]);
-
     // Continue with all the existing mapping logic...
     const statMap: Record<string, string> = {
       'STR': 'Strength',
@@ -342,25 +340,12 @@ function App() {
       setHp(json.maxHitPoints);
     }
 
-    // Map XP
-    if (json.XP !== undefined) {
-      setCurrentXP(json.XP);
-    }
-    if (json.totalXP !== undefined) {
-      setTotalXP(json.totalXP);
-    }
-
     // Map coins
     setCoins({
       gold: json.gold || 0,
       silver: json.silver || 0,
       copper: json.copper || 0
     });
-
-    // Map languages
-    if (json.languages) {
-      setLanguages(json.languages);
-    }
 
     // Map AC bonus
     if (json.acBonus !== undefined) {
@@ -581,28 +566,6 @@ function App() {
 
     setCharacterImported(true);
     toast.success('Character imported successfully!');
-  };
-
-  const importCharacter = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      try {
-        const json = JSON.parse(e.target?.result as string);
-        processImportData(json);
-      } catch (error) {
-        console.error('Error importing character:', error);
-        toast.error('Error importing character file. Please check the file format.');
-      }
-    };
-    reader.readAsText(file);
-    
-    // Reset the input so the same file can be imported again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   const handleToggleEquipped = (id: string) => {
@@ -867,7 +830,14 @@ function App() {
                 {/* Character Attributes View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
                   <CharacterAttributesView
-                    attributes={characterAttributes}
+                    attributes={{
+                      name,
+                      ancestry,
+                      class: characterClass,
+                      level,
+                      background,
+                      alignment
+                    }}
                     abilities={abilities}
                     talents={talents}
                     luckTokenUsed={luckTokenUsed}
@@ -875,13 +845,13 @@ function App() {
                     totalXP={totalXP}
                     languages={languages}
                     characterImported={characterImported}
-                    onToggleLuckToken={() => setLuckTokenUsed(!luckTokenUsed)}
+                    onToggleLuckToken={() => updateCharacterAttribute('luckTokenUsed', !luckTokenUsed)}
                     onUpdateXP={(current, total) => {
-                      setCurrentXP(current);
-                      setTotalXP(total);
+                      updateCharacterAttribute('currentXP', current);
+                      updateCharacterAttribute('totalXP', total);
                     }}
-                    onUpdateLanguages={setLanguages}
-                    onUpdateAttributes={setCharacterAttributes}
+                    onUpdateLanguages={(value) => updateCharacterAttribute('languages', value)}
+                    onUpdateAttribute={updateCharacterAttribute}
                     onUpdateAbilities={setAbilities}
                     onAddTalent={handleAddTalent}
                     onRemoveTalent={handleRemoveTalent}
