@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { User, Star, Dices, Sparkles, Plus, Edit, Upload, Download } from 'lucide-react';
 import { Button } from './ui/button';
 import { EditableStatField } from './EditableStatField';
-import { EditAbilitiesDialog } from './EditAbilitiesDialog';
-import { EditTalentDialog } from './EditTalentDialog';
+import { EditAbilitiesDialog } from './dialogs/EditAbilitiesDialog';
+import { EditTalentDialog } from './dialogs/EditTalentDialog';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -11,6 +11,8 @@ import {
   ContextMenuTrigger,
 } from './ui/context-menu';
 import { Attribute } from './character/Attribute';
+import { formatModifier, abilityModifier } from '../characterUtils';
+import { AbilityField } from './character/AbilityField';
 
 export interface CharacterAttribute {
   name: string;
@@ -27,7 +29,6 @@ export interface Ability {
   name: string;
   shortName: string;
   score: number;
-  bonus: number;
 }
 
 interface CharacterAttributesViewProps {
@@ -40,17 +41,16 @@ interface CharacterAttributesViewProps {
     alignment: string;
   };
   talents: Talent[];
-  abilities: Ability[];
+  abilities: Record<string, Ability>;
   luckTokenUsed: boolean;
   currentXP: number;
   xpToNextLevel: number;
   languages: string;
-  characterImported: boolean;
   onToggleLuckToken: () => void;
   onUpdateXP: (current: number, xpToNextLevel: number) => void;
   onUpdateLanguages: (languages: string) => void;
   onUpdateAttribute: (name: string, value: string) => void;
-  onUpdateAbilities: (abilities: Ability[]) => void;
+  onUpdateAbilities: (abilities: Record<string, Ability>) => void;
   onAddTalent: (talent: Talent) => void;
   onRemoveTalent: (id: string) => void;
   onImportCharacter: () => void;
@@ -65,7 +65,6 @@ export function CharacterAttributesView({
   currentXP,
   xpToNextLevel,
   languages,
-  characterImported,
   onToggleLuckToken,
   onUpdateXP,
   onUpdateLanguages,
@@ -103,10 +102,11 @@ export function CharacterAttributesView({
       roll = rollDice(20);
     }
     
-    const total = roll + ability.bonus;
+    const abilityBonus = abilityModifier(ability.score);
+    const total = roll + abilityBonus;
     const modeText = mode === 'advantage' ? ' (ADV)' : mode === 'disadvantage' ? ' (DIS)' : '';
-    const bonusText = ability.bonus !== 0 ? ` ${ability.bonus >= 0 ? '+' : ''}${ability.bonus}` : '';
-    const totalText = ability.bonus !== 0 ? ` = ${total}` : '';
+    const bonusText = abilityBonus !== 0 ? ` ${formatModifier(abilityBonus)}` : '';
+    const totalText = abilityBonus !== 0 ? ` = ${total}` : '';
     setRollResult(`${ability.shortName}${modeText}: ${roll}${rollDetails}${bonusText}${totalText}`);
   };
 
@@ -169,16 +169,11 @@ export function CharacterAttributesView({
 
       {/* Languages Section */}
       <div className="mb-4">
-        <div className="border-2 border-black p-3 bg-white">
-          <div className="text-xs uppercase tracking-wider text-gray-600 mb-1">Languages</div>
-          <input
-            type="text"
-            value={languages}
-            onChange={(e) => onUpdateLanguages(e.target.value)}
-            className="w-full font-black text-sm bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-            placeholder="Enter languages..."
+        <Attribute
+          name={'Languages'}
+          value={languages}
+          onChange={(_, value) => onUpdateAttribute('languages', value)}
           />
-        </div>
       </div>
 
       {/* Abilities Section */}
@@ -195,30 +190,16 @@ export function CharacterAttributesView({
           </Button>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {abilities.map((ability) => (
-            <ContextMenu key={ability.shortName}>
-              <ContextMenuTrigger asChild>
-                <button
-                  onClick={() => handleAbilityRoll(ability)}
-                  className="border-2 border-black p-2 bg-white hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                >
-                  <div className="text-xs font-black uppercase">{ability.shortName}</div>
-                  <div className="text-2xl font-black">{ability.score}</div>
-                  <div className="text-sm text-gray-600">
-                    {ability.bonus >= 0 ? '+' : ''}{ability.bonus}
-                  </div>
-                </button>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => handleAbilityRoll(ability, 'advantage')}>
-                  Roll with Advantage
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => handleAbilityRoll(ability, 'disadvantage')}>
-                  Roll with Disadvantage
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-          ))}
+          {Object.keys(abilities).map((key) => {
+            const ability = abilities[key];
+            return (
+              <AbilityField
+                key={key}
+                ability={ability}
+                onAbilityRoll={handleAbilityRoll}
+              />
+            );
+          })}
         </div>
       </div>
 

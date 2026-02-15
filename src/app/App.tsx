@@ -105,15 +105,6 @@ function App() {
     copper: 0
   });
 
-  const [abilities, setAbilities] = useState<Ability[]>([
-    { name: 'Strength', shortName: 'STR', score: 10, bonus: 0 },
-    { name: 'Dexterity', shortName: 'DEX', score: 10, bonus: 0 },
-    { name: 'Constitution', shortName: 'CON', score: 10, bonus: 0 },
-    { name: 'Intelligence', shortName: 'INT', score: 10, bonus: 0 },
-    { name: 'Wisdom', shortName: 'WIS', score: 10, bonus: 0 },
-    { name: 'Charisma', shortName: 'CHA', score: 10, bonus: 0 }
-  ]);
-
   const [talents, setTalents] = useState<Talent[]>([]);
 
   const [inventory, setInventory] = useState<ItemData[]>([]);
@@ -133,10 +124,12 @@ function App() {
       currentXP,
       xpToNextLevel,
       languages,
-      luckTokenUsed
+      luckTokenUsed,
+      abilities,
     },
     actions: {
       updateCharacterAttribute,
+      updateAbilities,
       importCharacter,
       exportCharacter
     }
@@ -149,7 +142,8 @@ function App() {
       
       // Build stats object
       const stats: Record<string, number> = {};
-      abilities.forEach(ability => {
+      Object.keys(abilities).forEach(key => {
+        const ability = abilities[key as keyof typeof abilities];
         stats[ability.shortName] = ability.score;
       });
       
@@ -209,7 +203,7 @@ function App() {
       const spellsKnown = spells.map(s => s.name).join(', ');
       
       // Calculate gear slots
-      const strScore = abilities.find(a => a.shortName === 'STR')?.score || 10;
+      const strScore = abilities.str.score || 10;
       const gearSlotsTotal = Math.max(strScore, 10);
       const gearSlotsUsed = inventory.reduce((sum, item) => sum + (item.slots || 0), 0);
       
@@ -315,24 +309,6 @@ function App() {
 
   const processImportData = (json: any) => {
     // Continue with all the existing mapping logic...
-    const statMap: Record<string, string> = {
-      'STR': 'Strength',
-      'DEX': 'Dexterity',
-      'CON': 'Constitution',
-      'INT': 'Intelligence',
-      'WIS': 'Wisdom',
-      'CHA': 'Charisma'
-    };
-
-    if (json.stats || json.rolledStats) {
-      const stats = json.stats || json.rolledStats;
-      const newAbilities = abilities.map((ability: Ability) => {
-        const score = stats[ability.shortName] || 10;
-        const bonus = Math.floor((score - 10) / 2);
-        return { ...ability, score, bonus };
-      });
-      setAbilities(newAbilities);
-    }
 
     // Map HP
     if (json.maxHitPoints !== undefined) {
@@ -844,7 +820,6 @@ function App() {
                     currentXP={currentXP}
                     xpToNextLevel={xpToNextLevel}
                     languages={languages}
-                    characterImported={characterImported}
                     onToggleLuckToken={() => updateCharacterAttribute('luckTokenUsed', !luckTokenUsed)}
                     onUpdateXP={(current, total) => {
                       updateCharacterAttribute('currentXP', current);
@@ -852,7 +827,7 @@ function App() {
                     }}
                     onUpdateLanguages={(value) => updateCharacterAttribute('languages', value)}
                     onUpdateAttribute={updateCharacterAttribute}
-                    onUpdateAbilities={setAbilities}
+                    onUpdateAbilities={updateAbilities}
                     onAddTalent={handleAddTalent}
                     onRemoveTalent={handleRemoveTalent}
                     onImportCharacter={handleOpenImportDialog}
@@ -862,7 +837,7 @@ function App() {
 
                 {/* Player View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
-                  <PlayerView
+                  {/* <PlayerView
                     hp={hp}
                     maxHp={maxHp}
                     ac={calculatedAC}
@@ -885,7 +860,7 @@ function App() {
                       setShowSpellDialog(true);
                     }}
                     onShowRollResult={setPlayerRollResult}
-                  />
+                  /> */}
                 </div>
 
                 {/* Inventory View */}
@@ -898,7 +873,7 @@ function App() {
                     onUpdateItem={handleUpdateItem}
                     onRemoveItem={handleRemoveItem}
                     onUseItem={handleUseItem}
-                    strScore={abilities.find(a => a.shortName === 'STR')?.score || 10}
+                    strScore={abilities.str.score}
                     coins={coins}
                     onUpdateCoins={handleUpdateCoins}
                   />

@@ -4,7 +4,6 @@ export interface Ability {
   name: string;
   shortName: string;
   score: number;
-  bonus: number;
 }
 
 export interface Talent {
@@ -194,7 +193,7 @@ export interface ShadowdarklingsLedgerEntry {
 export interface GameActions {
   // Character Actions
   updateCharacterAttribute: (name: string, value: string | number | boolean) => void;
-  updateAbilities: (abilities: Ability[]) => void;
+  updateAbilities: (abilities: Record<string, Ability>) => void;
   updateLanguages: (languages: string) => void;
   updateXP: (current: number, total: number) => void;
   toggleLuckToken: () => void;

@@ -1,25 +1,23 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import type { Ability } from './CharacterAttributesView';
+import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import type { Ability } from '../CharacterAttributesView';
 
 interface EditAbilitiesDialogProps {
   open: boolean;
   onClose: () => void;
-  abilities: Ability[];
-  onSave: (abilities: Ability[]) => void;
+  abilities: Record<string, Ability>;
+  onSave: (abilities: Record<string, Ability>) => void;
 }
 
 export function EditAbilitiesDialog({ open, onClose, abilities, onSave }: EditAbilitiesDialogProps) {
   const [editedAbilities, setEditedAbilities] = useState(abilities);
 
-  const handleScoreChange = (index: number, score: number) => {
-    const newAbilities = [...editedAbilities];
-    // Calculate bonus: (score - 10) / 2, rounded down
-    const bonus = Math.floor((score - 10) / 2);
-    newAbilities[index] = { ...newAbilities[index], score, bonus };
+  const handleScoreChange = (key: string, score: number) => {
+    const newAbilities = { ...editedAbilities };
+    newAbilities[key] = { ...newAbilities[key], score };
     setEditedAbilities(newAbilities);
   };
 
@@ -28,6 +26,10 @@ export function EditAbilitiesDialog({ open, onClose, abilities, onSave }: EditAb
     onClose();
   };
 
+  useEffect(() => {
+    setEditedAbilities(abilities);
+  }, [abilities]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md border-4 border-black bg-white">
@@ -35,13 +37,13 @@ export function EditAbilitiesDialog({ open, onClose, abilities, onSave }: EditAb
           <DialogTitle className="font-black uppercase">Edit Abilities</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {editedAbilities.map((ability, index) => (
-            <div key={ability.shortName} className="grid grid-cols-2 gap-4 items-center">
-              <Label className="font-black">{ability.name}</Label>
+          {Object.keys(editedAbilities).map((key) => (
+            <div key={key} className="grid grid-cols-2 gap-4 items-center">
+              <Label className="font-black">{editedAbilities[key].name}</Label>
               <Input
                 type="number"
-                value={ability.score}
-                onChange={(e) => handleScoreChange(index, parseInt(e.target.value) || 10)}
+                value={editedAbilities[key].score}
+                onChange={(e) => handleScoreChange(key, parseInt(e.target.value) || 10)}
                 className="border-2 border-black"
                 min={1}
                 max={20}

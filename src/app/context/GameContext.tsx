@@ -10,12 +10,12 @@ const initialState: GameState = {
   background: '',
   alignment: '',
   abilities: {
-    str: { name: 'Strength', shortName: 'STR', score: 10, bonus: 0 },
-    dex: { name: 'Dexterity', shortName: 'DEX', score: 10, bonus: 0 },
-    con: { name: 'Constitution', shortName: 'CON', score: 10, bonus: 0 },
-    int: { name: 'Intelligence', shortName: 'INT', score: 10, bonus: 0 },
-    wis: { name: 'Wisdom', shortName: 'WIS', score: 10, bonus: 0 },
-    cha: { name: 'Charisma', shortName: 'CHA', score: 10, bonus: 0 }
+    str: { name: 'Strength', shortName: 'STR', score: 10 },
+    dex: { name: 'Dexterity', shortName: 'DEX', score: 10 },
+    con: { name: 'Constitution', shortName: 'CON', score: 10 },
+    int: { name: 'Intelligence', shortName: 'INT', score: 10 },
+    wis: { name: 'Wisdom', shortName: 'WIS', score: 10 },
+    cha: { name: 'Charisma', shortName: 'CHA', score: 10 }
   },
   talents: [],
   languages: '',
@@ -39,7 +39,7 @@ const initialState: GameState = {
 // Action types
 type GameAction =
   | { type: 'UPDATE_CHARACTER_ATTRIBUTE'; payload: { name: string; value: string | number | boolean } }
-  | { type: 'UPDATE_ABILITIES'; payload: Ability[] }
+  | { type: 'UPDATE_ABILITIES'; payload: Record<string, Ability> }
   | { type: 'UPDATE_LANGUAGES'; payload: string }
   | { type: 'UPDATE_XP'; payload: { current: number; total: number } }
   | { type: 'TOGGLE_LUCK_TOKEN' }
@@ -132,6 +132,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     
     case 'IMPORT_CHARACTER':
       const { payload } = action;
+
       return { 
         ...state, 
         name: payload.name,
@@ -144,7 +145,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentXP: payload.XP,
         xpToNextLevel: payload.level * 10, 
         luckTokenUsed: false,
-        characterImported: true
+        characterImported: true,
+        abilities: {
+          str: { name: 'Strength', shortName: 'STR', score: payload.stats.STR || 10 },
+          dex: { name: 'Dexterity', shortName: 'DEX', score: payload.stats.DEX || 10 },
+          con: { name: 'Constitution', shortName: 'CON', score: payload.stats.CON || 10 },
+          int: { name: 'Intelligence', shortName: 'INT', score: payload.stats.INT || 10 },
+          wis: { name: 'Wisdom', shortName: 'WIS', score: payload.stats.WIS || 10 },
+          cha: { name: 'Charisma', shortName: 'CHA', score: payload.stats.CHA || 10 }
+        }
       };
     
     case 'EXPORT_CHARACTER':
