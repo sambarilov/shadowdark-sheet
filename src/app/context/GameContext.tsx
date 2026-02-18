@@ -23,8 +23,8 @@ const initialState: GameState = {
   currentXP: 0,
   xpToNextLevel: 10,
   luckTokenUsed: false,
-  hp: 0,
-  maxHp: 0,
+  hitPoints: 0,
+  maxHitPoints: 0,
   acBonus: 0,
   weaponBonuses: {},
   inventory: [],
@@ -86,10 +86,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, talents: state.talents.filter(t => t.id !== action.payload) };
     
     case 'UPDATE_HP':
-      return { ...state, hp: action.payload };
+      return { ...state, hitPoints: action.payload };
     
     case 'UPDATE_MAX_HP':
-      return { ...state, maxHp: action.payload };
+      return { ...state, maxHitPoints: action.payload };
     
     case 'UPDATE_AC_BONUS':
       return { ...state, acBonus: action.payload };
@@ -170,7 +170,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           id: `imported-talent-${index}`,
           level: t.level,
           description: t.description || t.talentRolledDesc,
-        })).filter(t => t.description) // Filter out empty descriptions
+        })).filter(t => t.description), // Filter out empty descriptions
+        acBonus: payload.acBonus || 0,
+        hitPoints: payload.hitPoints || 0,
+        maxHitPoints: payload.maxHitPoints || 0,
       };
     
     case 'EXPORT_CHARACTER':

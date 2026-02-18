@@ -9,6 +9,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from './ui/context-menu';
+import type { Ability } from '../types';
+import { abilityModifier } from '../characterUtils';
 
 interface Weapon {
   id: string;
@@ -30,13 +32,6 @@ interface Spell {
   active: boolean;
 }
 
-interface Ability {
-  name: string;
-  shortName: string;
-  score: number;
-  bonus: number;
-}
-
 interface PlayerViewProps {
   hp: number;
   maxHp: number;
@@ -44,7 +39,7 @@ interface PlayerViewProps {
   acBonus: number;
   weapons: Weapon[];
   spells: Spell[];
-  abilities: Ability[];
+  abilities: Record<string, Ability>;
   weaponBonuses: Record<string, number>;
   notes: string;
   onUpdateHP: (hp: number) => void;
@@ -67,8 +62,8 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
   const handleAttackRoll = (weapon: Weapon, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
     // Get selected ability or default to weapon's ability
     const selectedAbility = weaponAbilities[weapon.id] || weapon.weaponAbility;
-    const ability = abilities.find(a => a.shortName === selectedAbility);
-    const abilityBonus = ability?.bonus || 0;
+    const ability = abilities[selectedAbility];
+    const abilityBonus = abilityModifier(ability.score);
 
     // Get weapon attack bonus
     const weaponBonus = weaponBonuses[weapon.id] ?? weapon.attackBonus ?? 0;

@@ -14,7 +14,6 @@ Below is a list of things I'm NOT thinking of supporting with possible alternati
 
 - Character generation. (You can input values manually or import from Shadowdarklings)
 - Calculate success of spellcasting (might depend on Talents/Items, etc)
-- Add Dex bonus to some kinds of armor (there's a field where you can input a bonus to AC)
 - Track bonuses from talents/items (use the notes/bonus fields to add manually the bonuses or to remind yourself of those). 
 - Have spell data from any suplements (we have from the Core Rules and you can add your own)
 - Item data. We do have a small object in the code to track the damage die from each weapon and which ability they use (which I hope is ok, Kelsey. Let me know if it's not). See Shop below

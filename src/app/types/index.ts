@@ -80,8 +80,8 @@ export interface GameState {
   luckTokenUsed: boolean;
   
   // Combat Stats
-  hp: number;
-  maxHp: number;
+  hitPoints: number;
+  maxHitPoints: number;
   acBonus: number;
   weaponBonuses: Record<string, number>;
   
@@ -127,7 +127,6 @@ export interface ShadowdarklingsCharacter {
   background: string;
   deity: string;
   maxHitPoints: number;
-  armorClass: number;
   gearSlotsTotal: number;
   gearSlotsUsed: number;
   bonuses: ShadowdarklingsBonus[];
@@ -154,6 +153,8 @@ export interface ImportCharacter extends ShadowdarklingsCharacter {
   xpToNextLevel: number;
   talents: ImportCharacterTalent[];
   traits: Trait[]
+  hitPoints: number;
+  acBonus: number;
 }
 
 export interface Trait extends ShadowdarklingsBonus {}

@@ -14,6 +14,7 @@ import { ImportDialog } from './components/dialogs/ImportDialog';
 import { ExportDialog } from './components/dialogs/ExportDialog';
 import { useGame } from './context/GameContext';
 import type { Talent } from './types';
+import { calculateAC, abilityModifier } from './characterUtils';
 
 // Weapon stats lookup database
 const WEAPON_STATS: Record<string, { damage: string; weaponAbility?: string; attackBonus?: number }> = {
@@ -87,16 +88,9 @@ function App() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [importJsonText, setImportJsonText] = useState('');
   const [exportJsonText, setExportJsonText] = useState('');
-  // const [luckTokenUsed, setLuckTokenUsed] = useState(false);
   const [characterImported, setCharacterImported] = useState(false);
-  // const [currentXP, setCurrentXP] = useState(0);
-  // const [totalXP, setTotalXP] = useState(10);
-  // const [languages, setLanguages] = useState('');
-  const [hp, setHp] = useState(0);
-  const [maxHp, setMaxHp] = useState(0);
   const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
-  const [acBonus, setAcBonus] = useState(0);
   const [buyMarkup, setBuyMarkup] = useState(0);
   const [sellMarkup, setSellMarkup] = useState(-50);
   
@@ -129,6 +123,9 @@ function App() {
       abilities,
       talents,
       traits,
+      hitPoints,
+      maxHitPoints,
+      acBonus,
     },
     actions: {
       updateCharacterAttribute,
@@ -137,6 +134,9 @@ function App() {
       exportCharacter,
       addTalent,
       removeTalent,
+      updateHP,
+      updateMaxHP,
+      updateAcBonus,
     }
   } = useGame();
 
@@ -208,8 +208,6 @@ function App() {
         alignment: alignment,
         background: background,
         deity: '',
-        maxHitPoints: maxHp,
-        armorClass: calculatedAC,
         acBonus,
         gearSlotsTotal,
         gearSlotsUsed,
@@ -285,23 +283,12 @@ function App() {
   const processImportData = (json: any) => {
     // Continue with all the existing mapping logic...
 
-    // Map HP
-    if (json.maxHitPoints !== undefined) {
-      setMaxHp(json.maxHitPoints);
-      setHp(json.maxHitPoints);
-    }
-
     // Map coins
     setCoins({
       gold: json.gold || 0,
       silver: json.silver || 0,
       copper: json.copper || 0
     });
-
-    // Map AC bonus
-    if (json.acBonus !== undefined) {
-      setAcBonus(json.acBonus);
-    }
 
     // Map weapon bonuses
     if (json.weaponBonuses) {
@@ -667,36 +654,6 @@ function App() {
       damageBonus: item.damageBonus
     }));
 
-  // Calculate AC: base 10, overridden by best equipped armor, plus best equipped shield bonus, plus AC bonus
-  const calculateAC = () => {
-    let ac = 10; // Base AC
-    
-    // Find highest AC from equipped armor
-    const equippedArmor = inventory.filter(
-      (item: ItemData) => item.type === 'armor' && item.equipped && item.armorAC !== undefined
-    );
-    if (equippedArmor.length > 0) {
-      const highestArmorAC = Math.max(...equippedArmor.map((item: ItemData) => item.armorAC || 0));
-      ac = highestArmorAC; // Override base AC with armor AC
-    }
-    
-    // Add best equipped shield bonus
-    const equippedShields = inventory.filter(
-      (item: ItemData) => item.type === 'shield' && item.equipped && item.shieldACBonus !== undefined
-    );
-    if (equippedShields.length > 0) {
-      const highestShieldBonus = Math.max(...equippedShields.map((item: ItemData) => item.shieldACBonus || 0));
-      ac += highestShieldBonus;
-    }
-    
-    // Add AC bonus
-    ac += acBonus;
-    
-    return ac;
-  };
-
-  const calculatedAC = calculateAC();
-
   return (
     <div className="min-h-screen bg-white flex items-start justify-center">
       {/* Mobile Container for small screens, full-width for large screens */}
@@ -782,19 +739,19 @@ function App() {
 
                 {/* Player View */}
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3 lg:border-r-2 lg:border-black">
-                  {/* <PlayerView
-                    hp={hp}
-                    maxHp={maxHp}
-                    ac={calculatedAC}
+                  <PlayerView
+                    hp={hitPoints}
+                    maxHp={maxHitPoints}
+                    ac={calculateAC(inventory, acBonus, abilityModifier(abilities.dex.score))}
                     acBonus={acBonus}
                     weapons={weapons}
                     spells={spells}
                     abilities={abilities}
                     weaponBonuses={weaponBonuses}
                     notes={notes}
-                    onUpdateHP={setHp}
-                    onUpdateMaxHP={setMaxHp}
-                    onUpdateAcBonus={setAcBonus}
+                    onUpdateHP={updateHP}
+                    onUpdateMaxHP={updateMaxHP}
+                    onUpdateAcBonus={updateAcBonus}
                     onToggleSpell={handleToggleSpell}
                     onAddSpell={handleAddSpell}
                     onRemoveSpell={handleRemoveSpell}
@@ -805,7 +762,7 @@ function App() {
                       setShowSpellDialog(true);
                     }}
                     onShowRollResult={setPlayerRollResult}
-                  /> */}
+                  />
                 </div>
 
                 {/* Inventory View */}

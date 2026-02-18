@@ -9,16 +9,11 @@ import { formatModifier, abilityModifier } from '../characterUtils';
 import { AbilityField } from './character/AbilityField';
 import { TalentField } from './character/TalentField';
 import type { Talent } from '../types';
+import { Ability } from '../types';
 
 export interface CharacterAttribute {
   name: string;
   value: string;
-}
-
-export interface Ability {
-  name: string;
-  shortName: string;
-  score: number;
 }
 
 interface CharacterAttributesViewProps {
