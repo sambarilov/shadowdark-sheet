@@ -4,25 +4,15 @@ import { Button } from './ui/button';
 import { EditableStatField } from './EditableStatField';
 import { EditAbilitiesDialog } from './dialogs/EditAbilitiesDialog';
 import { EditTalentDialog } from './dialogs/EditTalentDialog';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from './ui/context-menu';
 import { Attribute } from './character/Attribute';
 import { formatModifier, abilityModifier } from '../characterUtils';
 import { AbilityField } from './character/AbilityField';
+import { TalentField } from './character/TalentField';
+import type { Talent } from '../types';
 
 export interface CharacterAttribute {
   name: string;
   value: string;
-}
-
-export interface Talent {
-  id: string;
-  name: string;
-  description: string;
 }
 
 export interface Ability {
@@ -67,7 +57,6 @@ export function CharacterAttributesView({
   languages,
   onToggleLuckToken,
   onUpdateXP,
-  onUpdateLanguages,
   onUpdateAttribute,
   onUpdateAbilities,
   onAddTalent,
@@ -261,29 +250,15 @@ export function CharacterAttributesView({
             <p className="text-gray-500 italic">No talents</p>
           ) : (
             talents.map((talent) => (
-              <ContextMenu key={talent.id}>
-                <ContextMenuTrigger asChild>
-                  <div className="border-2 border-black p-3 bg-white group cursor-pointer">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="font-black mb-1">{talent.name}</div>
-                        <p className="text-sm text-gray-600">{talent.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                  <ContextMenuItem onClick={() => {
-                    setEditingTalent(talent);
-                    setShowTalentDialog(true);
-                  }}>
-                    Edit Talent
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => onRemoveTalent(talent.id)} className="text-red-600">
-                    Delete Talent
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
+              <TalentField
+                key={talent.id}
+                talent={talent}
+                onRemoveTalent={() => onRemoveTalent(talent.id)}
+                onEditTalent={() => {
+                  setEditingTalent(talent);
+                  setShowTalentDialog(true);
+                }}
+              />
             ))
           )}
         </div>

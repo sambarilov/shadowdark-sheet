@@ -8,7 +8,7 @@ export interface Ability {
 
 export interface Talent {
   id: string;
-  name: string;
+  level: number;
   description: string;
 }
 
@@ -73,6 +73,7 @@ export interface GameState {
     cha: Ability;
   };
   talents: Talent[];
+  traits: Trait[];
   languages: string;
   currentXP: number;
   xpToNextLevel: number;
@@ -147,6 +148,20 @@ export interface ShadowdarklingsCharacter {
   edits: any[]; // Could be more specific if needed
 }
 
+export interface ImportCharacter extends ShadowdarklingsCharacter {
+  luckTokenUsed: boolean;
+  currentXP: number;
+  xpToNextLevel: number;
+  talents: ImportCharacterTalent[];
+  traits: Trait[]
+}
+
+export interface Trait extends ShadowdarklingsBonus {}
+
+export interface ImportCharacterTalent extends ShadowdarklingsLevel {
+  description: string;
+}
+
 export interface ShadowdarklingsLevel {
   level: number;
   talentRolledDesc: string;
@@ -189,7 +204,6 @@ export interface ShadowdarklingsLedgerEntry {
   notes: string;
 }
 
-
 export interface GameActions {
   // Character Actions
   updateCharacterAttribute: (name: string, value: string | number | boolean) => void;
@@ -221,6 +235,6 @@ export interface GameActions {
   
   // Session Actions
   updateNotes: (notes: string) => void;
-  importCharacter: (json: ShadowdarklingsCharacter) => void;
+  importCharacter: (json: ImportCharacter) => void;
   exportCharacter: () => string;
 }

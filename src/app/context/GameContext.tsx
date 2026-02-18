@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react';
-import { GameState, GameActions, Ability, Talent, Spell, ItemData, Coins, ShadowdarklingsCharacter } from '../types';
+import { GameState, GameActions, Ability, Talent, Spell, ItemData, Coins, ImportCharacter } from '../types';
 
 // Initial state
 const initialState: GameState = {
@@ -18,6 +18,7 @@ const initialState: GameState = {
     cha: { name: 'Charisma', shortName: 'CHA', score: 10 }
   },
   talents: [],
+  traits: [],
   languages: '',
   currentXP: 0,
   xpToNextLevel: 10,
@@ -57,7 +58,7 @@ type GameAction =
   | { type: 'UPDATE_ITEM'; payload: { id: string; updates: Partial<ItemData> } }
   | { type: 'UPDATE_COINS'; payload: Coins }
   | { type: 'UPDATE_NOTES'; payload: string }
-  | { type: 'IMPORT_CHARACTER'; payload: ShadowdarklingsCharacter }
+  | { type: 'IMPORT_CHARACTER'; payload: ImportCharacter }
   | { type: 'EXPORT_CHARACTER' };
 
 // Reducer function
@@ -142,9 +143,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         background: payload.background,
         alignment: payload.alignment,
         languages: payload.languages,
-        currentXP: payload.XP,
-        xpToNextLevel: payload.level * 10, 
-        luckTokenUsed: false,
+        currentXP: payload.currentXP || payload.XP,
+        xpToNextLevel: payload.xpToNextLevel || payload.level * 10, 
+        luckTokenUsed: payload.luckTokenUsed || false,
         characterImported: true,
         abilities: {
           str: { name: 'Strength', shortName: 'STR', score: payload.stats.STR || 10 },
@@ -153,7 +154,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           int: { name: 'Intelligence', shortName: 'INT', score: payload.stats.INT || 10 },
           wis: { name: 'Wisdom', shortName: 'WIS', score: payload.stats.WIS || 10 },
           cha: { name: 'Charisma', shortName: 'CHA', score: payload.stats.CHA || 10 }
-        }
+        },
+        traits: (payload.traits || payload.bonuses).map((t, index) => ({
+          id: `imported-${index}`,
+          name: t.name,
+          sourceName: t.sourceName,
+          sourceType: t.sourceType,
+          sourceCategory: t.sourceCategory,
+          gainedAtLevel: t.gainedAtLevel,
+          bonusName: t.bonusName,
+          bonusTo: t.bonusTo,
+          bonusAmount: t.bonusAmount,
+        })),
+        talents: (payload.talents || payload.levels.concat([payload.ambitionTalentLevel])).map((t, index) => ({
+          id: `imported-talent-${index}`,
+          level: t.level,
+          description: t.description || t.talentRolledDesc,
+        })).filter(t => t.description) // Filter out empty descriptions
       };
     
     case 'EXPORT_CHARACTER':
@@ -232,7 +249,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     updateNotes: (notes) => 
       dispatch({ type: 'UPDATE_NOTES', payload: notes }),
     
-    importCharacter: (json: ShadowdarklingsCharacter) => {
+    importCharacter: (json: ImportCharacter) => {
       dispatch({ type: 'IMPORT_CHARACTER', payload: json });
     },
     

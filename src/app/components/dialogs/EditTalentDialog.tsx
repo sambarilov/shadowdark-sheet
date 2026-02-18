@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import type { Talent } from '../CharacterAttributesView';
+import { Talent } from '../../types';
 
 interface EditTalentDialogProps {
   open: boolean;
@@ -14,27 +14,27 @@ interface EditTalentDialogProps {
 }
 
 export function EditTalentDialog({ open, onClose, onSave, talent }: EditTalentDialogProps) {
-  const [name, setName] = useState('');
+  const [level, setLevel] = useState(1);
   const [description, setDescription] = useState('');
 
   // Update form state when talent changes or dialog opens
   useEffect(() => {
     if (open) {
-      setName(talent?.name || '');
+      setLevel(talent?.level || 1);
       setDescription(talent?.description || '');
     }
   }, [open, talent]);
 
   const handleSave = () => {
-    if (name.trim() && description.trim()) {
+    if (level && description.trim()) {
       onSave({
         id: talent?.id || `talent-${Date.now()}`,
-        name: name.trim(),
+        level: level,
         description: description.trim()
       });
       onClose();
       if (!talent) {
-        setName('');
+        setLevel(1);
         setDescription('');
       }
     }
@@ -50,12 +50,13 @@ export function EditTalentDialog({ open, onClose, onSave, talent }: EditTalentDi
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label className="font-black">Name</Label>
+            <Label className="font-black">Level</Label>
             <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={level}
+              type='number'
+              onChange={(e) => setLevel(Number(e.target.value))}
               className="border-2 border-black mt-1"
-              placeholder="Talent name"
+              placeholder="Talent level"
             />
           </div>
           <div>

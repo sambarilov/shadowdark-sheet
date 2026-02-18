@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { PlayerView } from './components/PlayerView';
 import { InventoryView, type ItemData } from './components/InventoryView';
-import { CharacterAttributesView, type Talent, type Ability } from './components/CharacterAttributesView';
+import { CharacterAttributesView } from './components/CharacterAttributesView';
 import { ShopView } from './components/ShopView';
 import { DiceRollerDrawer } from './components/DiceRollerDrawer';
 import { EditSpellDialog } from './components/EditSpellDialog';
@@ -13,6 +13,7 @@ import { ItemType } from './components/EditItemDialog';
 import { ImportDialog } from './components/dialogs/ImportDialog';
 import { ExportDialog } from './components/dialogs/ExportDialog';
 import { useGame } from './context/GameContext';
+import type { Talent } from './types';
 
 // Weapon stats lookup database
 const WEAPON_STATS: Record<string, { damage: string; weaponAbility?: string; attackBonus?: number }> = {
@@ -105,7 +106,7 @@ function App() {
     copper: 0
   });
 
-  const [talents, setTalents] = useState<Talent[]>([]);
+  // const [talents, setTalents] = useState<Talent[]>([]);
 
   const [inventory, setInventory] = useState<ItemData[]>([]);
 
@@ -126,12 +127,16 @@ function App() {
       languages,
       luckTokenUsed,
       abilities,
+      talents,
+      traits,
     },
     actions: {
       updateCharacterAttribute,
       updateAbilities,
       importCharacter,
-      exportCharacter
+      exportCharacter,
+      addTalent,
+      removeTalent,
     }
   } = useGame();
 
@@ -145,37 +150,6 @@ function App() {
       Object.keys(abilities).forEach(key => {
         const ability = abilities[key as keyof typeof abilities];
         stats[ability.shortName] = ability.score;
-      });
-      
-      // Build bonuses array from talents
-      const bonuses = talents.map((talent) => {
-        // Try to parse the description back to bonus format
-        const parts = talent.description.split(' | ');
-        const bonus: any = {
-          name: talent.name,
-          bonusName: talent.name.replace(/\s+/g, '')
-        };
-        
-        parts.forEach(part => {
-          if (part.startsWith('Class:') || part.startsWith('Ancestry:')) {
-            const [sourceType, sourceName] = part.split(': ');
-            bonus.sourceType = sourceType;
-            bonus.sourceName = sourceName;
-            bonus.sourceCategory = 'Ability';
-          } else if (part.startsWith('Bonus to:')) {
-            bonus.bonusTo = part.replace('Bonus to: ', '');
-          } else if (part.startsWith('Level ')) {
-            bonus.gainedAtLevel = parseInt(part.replace('Level ', '')) || 1;
-          } else if (part.startsWith('+')) {
-            bonus.bonusAmount = parseInt(part.replace('+', '')) || 0;
-          }
-        });
-        
-        if (!bonus.gainedAtLevel) bonus.gainedAtLevel = 1;
-        if (!bonus.sourceType) bonus.sourceType = 'Other';
-        if (!bonus.sourceName) bonus.sourceName = 'Unknown';
-        
-        return bonus;
       });
       
       // Build gear array from inventory
@@ -216,8 +190,10 @@ function App() {
         class: characterClass,
         level: level,
         levels: [], // Empty for now, could be populated if tracking level history
-        XP: currentXP,
-        totalXP: xpToNextLevel,
+        currentXP,
+        xpToNextLevel,
+        talents,
+        traits,
         ambitionTalentLevel: {
           level: 1,
           talentRolledDesc: '',
@@ -237,7 +213,6 @@ function App() {
         acBonus,
         gearSlotsTotal,
         gearSlotsUsed,
-        bonuses,
         gear,
         spellsKnown,
         languages,
@@ -348,37 +323,6 @@ function App() {
       }
       if (json.shop.sellMarkup !== undefined) {
         setSellMarkup(json.shop.sellMarkup);
-      }
-    }
-
-    // Map talents from bonuses
-    if (json.bonuses && Array.isArray(json.bonuses)) {
-      const newTalents: Talent[] = json.bonuses.map((b: any, index: number) => {
-        const name = b.name || b.bonusName || 'Unknown Bonus';
-        const descriptionParts = [];
-        
-        if (b.sourceType && b.sourceName) {
-          descriptionParts.push(`${b.sourceType}: ${b.sourceName}`);
-        }
-        if (b.bonusTo) {
-          descriptionParts.push(`Bonus to: ${b.bonusTo}`);
-        }
-        if (b.bonusAmount) {
-          descriptionParts.push(`+${b.bonusAmount}`);
-        }
-        if (b.gainedAtLevel) {
-          descriptionParts.push(`Level ${b.gainedAtLevel}`);
-        }
-        
-        return {
-          id: `bonus-${index}`,
-          name,
-          description: descriptionParts.length > 0 ? descriptionParts.join(' | ') : 'Special ability'
-        };
-      });
-      
-      if (newTalents.length > 0) {
-        setTalents(newTalents);
       }
     }
 
@@ -597,12 +541,13 @@ function App() {
   };
 
   const handleAddTalent = (talent: Talent) => {
-    setTalents((talents: Talent[]) => [...talents, talent]);
+    addTalent(talent);
   };
 
   const handleRemoveTalent = (id: string) => {
-    setTalents((talents: Talent[]) => talents.filter((talent: Talent) => talent.id !== id));
+    removeTalent(id);
   };
+
   const handleToggleSpell = (id: string) => {
     setSpells((spells: Spell[]) =>
       spells.map((spell: Spell) =>
