@@ -3,7 +3,7 @@ import { GameProvider } from './context/GameContext';
 import { PlayerView } from './components/PlayerView';
 import { CharacterAttributesView } from './components/CharacterAttributesView';
 import { InventoryView } from './components/InventoryView';
-import { EditSpellDialog } from './components/EditSpellDialog';
+import { EditSpellDialog } from './components/dialogs/EditSpellDialog';
 import { Button } from './components/ui/button';
 import { Toaster } from './components/ui/sonner';
 import type { Spell } from './types';

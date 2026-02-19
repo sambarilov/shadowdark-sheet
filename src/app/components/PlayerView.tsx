@@ -9,8 +9,9 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from './ui/context-menu';
-import type { Ability } from '../types';
+import type { Ability, Spell } from '../types';
 import { abilityModifier } from '../characterUtils';
+import { SpellField } from './character/Spell';
 
 interface Weapon {
   id: string;
@@ -20,16 +21,6 @@ interface Weapon {
   equipped: boolean;
   attackBonus?: number;
   damageBonus?: string;
-}
-
-interface Spell {
-  id: string;
-  name: string;
-  level: number;
-  duration: string;
-  range: string;
-  description: string;
-  active: boolean;
 }
 
 interface PlayerViewProps {
@@ -293,61 +284,14 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
             <p className="text-gray-500 italic">No spells available</p>
           ) : (
             spells.map((spell) => (
-              <ContextMenu key={spell.id}>
-                <ContextMenuTrigger asChild>
-                  <div className="border-2 border-black p-3 bg-white cursor-pointer">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          onClick={() => onToggleSpell(spell.id)}
-                          className={`h-8 px-3 border-2 border-black ${spell.active
-                              ? 'bg-white text-black hover:bg-gray-100'
-                              : 'bg-gray-300 text-gray-600 line-through'
-                            }`}
-                          size="sm"
-                        >
-                          <span className="font-black text-xs">
-                            {spell.active ? 'READY' : 'FAILED'}
-                          </span>
-                        </Button>
-                        <span className="font-black">{spell.name}</span>
-                        <span className="text-xs bg-black text-white px-2 py-1">
-                          LVL {spell.level}
-                        </span>
-                      </div>
-                      <Button
-                        onClick={() => handleCastingRoll(spell)}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        className="bg-black text-white hover:bg-gray-800 border-2 border-black"
-                        size="sm"
-                        disabled={!spell.active}
-                      >
-                        <Dices size={16} className="mr-1" />
-                        Cast
-                      </Button>
-                    </div>
-                    <div className="text-xs text-gray-600 mb-1">
-                      {spell.range && <span>Range: {spell.range}</span>}
-                      {spell.range && spell.duration && <span className="mx-2">|</span>}
-                      {spell.duration && <span>Duration: {spell.duration}</span>}
-                    </div>
-                    <p className="text-sm text-gray-600">{spell.description}</p>
-                  </div>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                  <ContextMenuItem onClick={() => {
-                    onOpenSpellDialog(spell);
-                  }}>
-                    Edit Spell
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => onRemoveSpell(spell.id)} className="text-red-600">
-                    Delete Spell
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
+              <SpellField
+                key={spell.id}
+                spell={spell}
+                onToggleSpell={onToggleSpell}
+                onRemoveSpell={onRemoveSpell}
+                onEditSpell={onOpenSpellDialog}
+                onCastSpell={handleCastingRoll}
+              />
             ))
           )}
         </div>

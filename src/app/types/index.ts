@@ -17,13 +17,17 @@ export interface CharacterAttribute {
   value: string;
 }
 
-export interface Spell {
-  id: string;
+export interface SpellData {
   name: string;
-  level: number;
+  tier: number;
   duration: string;
   range: string;
   description: string;
+  source: string;
+}
+
+export interface Spell extends Omit<SpellData, 'source'> {
+  id: string;
   active: boolean;
 }
 
@@ -155,6 +159,7 @@ export interface ImportCharacter extends ShadowdarklingsCharacter {
   traits: Trait[]
   hitPoints: number;
   acBonus: number;
+  spells: Spell[];
 }
 
 export interface Trait extends ShadowdarklingsBonus {}
@@ -226,6 +231,7 @@ export interface GameActions {
   // Spell Actions
   addSpell: (spell: Spell) => void;
   removeSpell: (id: string) => void;
+  updateSpell: (id: string, updates: Partial<Spell>) => void;
   toggleSpell: (id: string) => void;
   
   // Inventory Actions

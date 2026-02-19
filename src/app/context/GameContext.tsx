@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react';
 import { GameState, GameActions, Ability, Talent, Spell, ItemData, Coins, ImportCharacter } from '../types';
+import { importSpells } from '../importCharacterUtils';
 
 // Initial state
 const initialState: GameState = {
@@ -51,6 +52,7 @@ type GameAction =
   | { type: 'UPDATE_AC_BONUS'; payload: number }
   | { type: 'UPDATE_WEAPON_BONUSES'; payload: Record<string, number> }
   | { type: 'ADD_SPELL'; payload: Spell }
+  | { type: 'UPDATE_SPELL'; payload: { id: string; updates: Partial<Spell> } }
   | { type: 'REMOVE_SPELL'; payload: string }
   | { type: 'TOGGLE_SPELL'; payload: string }
   | { type: 'ADD_ITEM'; payload: ItemData }
@@ -99,6 +101,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     
     case 'ADD_SPELL':
       return { ...state, spells: [...state.spells, action.payload] };
+
+    case 'UPDATE_SPELL':
+      return {
+        ...state,
+        spells: state.spells.map(s => 
+          s.id === action.payload.id ? { ...s, ...action.payload.updates } : s
+        )
+      };
     
     case 'REMOVE_SPELL':
       return { ...state, spells: state.spells.filter(s => s.id !== action.payload) };
@@ -133,6 +143,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     
     case 'IMPORT_CHARACTER':
       const { payload } = action;
+
 
       return { 
         ...state, 
@@ -170,10 +181,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           id: `imported-talent-${index}`,
           level: t.level,
           description: t.description || t.talentRolledDesc,
-        })).filter(t => t.description), // Filter out empty descriptions
+        })).filter(t => t.description),
         acBonus: payload.acBonus || 0,
         hitPoints: payload.hitPoints || 0,
         maxHitPoints: payload.maxHitPoints || 0,
+        spells: (payload.spells || importSpells(payload) || [])
       };
     
     case 'EXPORT_CHARACTER':
@@ -230,6 +242,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     addSpell: (spell) => 
       dispatch({ type: 'ADD_SPELL', payload: spell }),
+
+    updateSpell: (id, updates) =>
+      dispatch({ type: 'UPDATE_SPELL', payload: { id, updates } }),
     
     removeSpell: (id) => 
       dispatch({ type: 'REMOVE_SPELL', payload: id }),

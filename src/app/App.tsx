@@ -5,15 +5,14 @@ import { InventoryView, type ItemData } from './components/InventoryView';
 import { CharacterAttributesView } from './components/CharacterAttributesView';
 import { ShopView } from './components/ShopView';
 import { DiceRollerDrawer } from './components/DiceRollerDrawer';
-import { EditSpellDialog } from './components/EditSpellDialog';
+import { EditSpellDialog } from './components/dialogs/EditSpellDialog';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
-import spellsData from '../../assets/json/spells.json';
 import { ItemType } from './components/EditItemDialog';
 import { ImportDialog } from './components/dialogs/ImportDialog';
 import { ExportDialog } from './components/dialogs/ExportDialog';
 import { useGame } from './context/GameContext';
-import type { Talent } from './types';
+import type { Spell, Talent } from './types';
 import { calculateAC, abilityModifier } from './characterUtils';
 
 // Weapon stats lookup database
@@ -56,26 +55,6 @@ const SHIELD_STATS: Record<string, { shieldACBonus: number }> = {
   'Tower shield': { shieldACBonus: 3 },
 };
 
-interface SpellData {
-  source: string;
-  name: string;
-  tier: number;
-  spellType: string;
-  duration: string;
-  range: string;
-  description: string;
-}
-
-interface Spell {
-  id: string;
-  name: string;
-  level: number;
-  duration: string;
-  range: string;
-  description: string;
-  active: boolean;
-}
-
 function App() {
   const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('attributes');
   const [showShop, setShowShop] = useState(false);
@@ -101,8 +80,6 @@ function App() {
 
   const [inventory, setInventory] = useState<ItemData[]>([]);
 
-  const [spells, setSpells] = useState<Spell[]>([]);
-
   const [shopItems, setShopItems] = useState<ItemData[]>([]);
 
   const {
@@ -124,6 +101,7 @@ function App() {
       maxHitPoints,
       acBonus,
       notes,
+      spells,
     },
     actions: {
       updateCharacterAttribute,
@@ -135,7 +113,11 @@ function App() {
       updateHP,
       updateMaxHP,
       updateAcBonus,
-      updateNotes
+      updateNotes,
+      addSpell,
+      toggleSpell,
+      updateSpell,
+      removeSpell
     }
   } = useGame();
 
@@ -189,7 +171,7 @@ function App() {
         class: characterClass,
         level: level,
         levels: [], // Empty for now, could be populated if tracking level history
-        currentXP,
+        xp: currentXP,
         xpToNextLevel,
         talents,
         traits,
@@ -211,7 +193,10 @@ function App() {
         gearSlotsTotal,
         gearSlotsUsed,
         gear,
+        hitPoints,
+        maxHitPoints,
         spellsKnown,
+        spells,
         languages,
         gold: coins.gold,
         silver: coins.silver,
@@ -426,45 +411,6 @@ function App() {
       setInventory(expandedInventory);
     }
 
-    // Map spells
-    if (json.spellsKnown && typeof json.spellsKnown === 'string' && json.spellsKnown.trim() !== 'None') {
-      const spellNames = json.spellsKnown.split(',').map((s: string) => s.trim()).filter((s: string) => s);
-      const spellsDatabase: SpellData[] = spellsData as SpellData[];
-      
-      const newSpells: Spell[] = [];
-      spellNames.forEach((spellName: string, index: number) => {
-        const spellInfo = spellsDatabase.find(
-          (s: SpellData) => s.name.toLowerCase() === spellName.toLowerCase()
-        );
-        
-        if (spellInfo) {
-          newSpells.push({
-            id: `spell-${index}`,
-            name: spellInfo.name,
-            level: spellInfo.tier,
-            duration: spellInfo.duration,
-            range: spellInfo.range,
-            description: spellInfo.description,
-            active: true
-          });
-        } else {
-          newSpells.push({
-            id: `spell-${index}`,
-            name: spellName,
-            level: 1,
-            duration: '',
-            range: '',
-            description: 'Details not available',
-            active: true
-          });
-        }
-      });
-      
-      if (newSpells.length > 0) {
-        setSpells(newSpells);
-      }
-    }
-
     setCharacterImported(true);
     toast.success('Character imported successfully!');
   };
@@ -529,21 +475,6 @@ function App() {
     removeTalent(id);
   };
 
-  const handleToggleSpell = (id: string) => {
-    setSpells((spells: Spell[]) =>
-      spells.map((spell: Spell) =>
-        spell.id === id ? { ...spell, active: !spell.active } : spell
-      )
-    );
-  };
-
-  const handleAddSpell = (spell: Spell) => {
-    setSpells((spells: Spell[]) => [...spells, spell]);
-  };
-
-  const handleRemoveSpell = (id: string) => {
-    setSpells((spells: Spell[]) => spells.filter((spell: Spell) => spell.id !== id));
-  };
   const formatPrice = (price: { gold: number; silver: number; copper: number }) => {
     const parts = [];
     if (price.gold > 0) parts.push(`${price.gold}g`);
@@ -746,9 +677,8 @@ function App() {
                     onUpdateHP={updateHP}
                     onUpdateMaxHP={updateMaxHP}
                     onUpdateAcBonus={updateAcBonus}
-                    onToggleSpell={handleToggleSpell}
-                    onAddSpell={handleAddSpell}
-                    onRemoveSpell={handleRemoveSpell}
+                    onToggleSpell={toggleSpell}
+                    onRemoveSpell={removeSpell}
                     onUpdateWeaponBonuses={setWeaponBonuses}
                     onUpdateNotes={updateNotes}
                     onOpenSpellDialog={(spell) => {
@@ -873,7 +803,12 @@ function App() {
           <EditSpellDialog
             spell={editingSpell}
             onSave={(spell) => {
-              handleAddSpell(spell);
+              if (spell.id === editingSpell?.id) {
+                updateSpell(spell.id, spell);
+              } else {
+                addSpell(spell);
+              }
+
               setShowSpellDialog(false);
               setEditingSpell(undefined);
             }}

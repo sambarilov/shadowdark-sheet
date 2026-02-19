@@ -1,26 +1,17 @@
 import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-
-export interface SpellData {
-  id: string;
-  name: string;
-  level: number;
-  duration: string;
-  range: string;
-  description: string;
-  active: boolean;
-}
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Spell } from '@/app/types';
 
 interface EditSpellDialogProps {
-  spell?: SpellData;
-  onSave: (spell: SpellData) => void;
+  spell?: Spell;
+  onSave: (spell: Spell) => void;
   onCancel: () => void;
 }
 
 export function EditSpellDialog({ spell, onSave, onCancel }: EditSpellDialogProps) {
   const [name, setName] = useState(spell?.name || '');
-  const [level, setLevel] = useState(spell?.level || 1);
+  const [tier, setTier] = useState(spell?.tier || 1);
   const [duration, setDuration] = useState(spell?.duration || '');
   const [range, setRange] = useState(spell?.range || '');
   const [description, setDescription] = useState(spell?.description || '');
@@ -28,10 +19,10 @@ export function EditSpellDialog({ spell, onSave, onCancel }: EditSpellDialogProp
   const handleSave = () => {
     if (!name.trim()) return;
 
-    const spellData: SpellData = {
+    const spellData: Spell = {
       id: spell?.id || `spell-${Date.now()}`,
       name: name.trim(),
-      level,
+      tier,
       duration: duration.trim(),
       range: range.trim(),
       description: description.trim(),
@@ -60,11 +51,11 @@ export function EditSpellDialog({ spell, onSave, onCancel }: EditSpellDialogProp
           </div>
 
           <div>
-            <label className="text-sm font-bold mb-1 block">Level</label>
+            <label className="text-sm font-bold mb-1 block">Tier</label>
             <Input
               type="number"
-              value={level}
-              onChange={(e) => setLevel(parseInt(e.target.value) || 1)}
+              value={tier}
+              onChange={(e) => setTier(parseInt(e.target.value) || 1)}
               min={1}
               max={9}
               className="border-2 border-black"
