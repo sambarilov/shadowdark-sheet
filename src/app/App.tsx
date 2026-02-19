@@ -90,7 +90,6 @@ function App() {
   const [exportJsonText, setExportJsonText] = useState('');
   const [characterImported, setCharacterImported] = useState(false);
   const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
-  const [notes, setNotes] = useState('');
   const [buyMarkup, setBuyMarkup] = useState(0);
   const [sellMarkup, setSellMarkup] = useState(-50);
   
@@ -99,8 +98,6 @@ function App() {
     silver: 0,
     copper: 0
   });
-
-  // const [talents, setTalents] = useState<Talent[]>([]);
 
   const [inventory, setInventory] = useState<ItemData[]>([]);
 
@@ -126,6 +123,7 @@ function App() {
       hitPoints,
       maxHitPoints,
       acBonus,
+      notes,
     },
     actions: {
       updateCharacterAttribute,
@@ -137,6 +135,7 @@ function App() {
       updateHP,
       updateMaxHP,
       updateAcBonus,
+      updateNotes
     }
   } = useGame();
 
@@ -293,11 +292,6 @@ function App() {
     // Map weapon bonuses
     if (json.weaponBonuses) {
       setWeaponBonuses(json.weaponBonuses);
-    }
-
-    // Map notes
-    if (json.notes) {
-      setNotes(json.notes);
     }
 
     // Map shop data
@@ -756,7 +750,7 @@ function App() {
                     onAddSpell={handleAddSpell}
                     onRemoveSpell={handleRemoveSpell}
                     onUpdateWeaponBonuses={setWeaponBonuses}
-                    onUpdateNotes={setNotes}
+                    onUpdateNotes={updateNotes}
                     onOpenSpellDialog={(spell) => {
                       setEditingSpell(spell);
                       setShowSpellDialog(true);
