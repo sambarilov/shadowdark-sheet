@@ -185,7 +185,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         acBonus: payload.acBonus || 0,
         hitPoints: payload.hitPoints || 0,
         maxHitPoints: payload.maxHitPoints || 0,
-        spells: (payload.spells || importSpells(payload) || [])
+        spells: (payload.spells || importSpells(payload) || []),
+        coins: { 
+          gold: payload.gold || 0,
+          silver: payload.silver || 0,
+          copper: payload.copper || 0,
+        },
       };
     
     case 'EXPORT_CHARACTER':

@@ -72,12 +72,6 @@ function App() {
   const [buyMarkup, setBuyMarkup] = useState(0);
   const [sellMarkup, setSellMarkup] = useState(-50);
   
-  const [coins, setCoins] = useState({
-    gold: 0,
-    silver: 0,
-    copper: 0
-  });
-
   const [inventory, setInventory] = useState<ItemData[]>([]);
 
   const [shopItems, setShopItems] = useState<ItemData[]>([]);
@@ -102,6 +96,7 @@ function App() {
       acBonus,
       notes,
       spells,
+      coins
     },
     actions: {
       updateCharacterAttribute,
@@ -117,7 +112,8 @@ function App() {
       addSpell,
       toggleSpell,
       updateSpell,
-      removeSpell
+      removeSpell,
+      updateCoins
     }
   } = useGame();
 
@@ -266,13 +262,6 @@ function App() {
 
   const processImportData = (json: any) => {
     // Continue with all the existing mapping logic...
-
-    // Map coins
-    setCoins({
-      gold: json.gold || 0,
-      silver: json.silver || 0,
-      copper: json.copper || 0
-    });
 
     // Map weapon bonuses
     if (json.weaponBonuses) {
@@ -437,10 +426,6 @@ function App() {
     setInventory((items: ItemData[]) => items.filter((item: ItemData) => item.id !== id));
   };
 
-  const handleUpdateCoins = (gold: number, silver: number, copper: number) => {
-    setCoins({ gold, silver, copper });
-  };
-
   const handleUseItem = (id: string) => {
     setInventory((items: ItemData[]) => 
       items.map((item: ItemData) => {
@@ -496,7 +481,7 @@ function App() {
       const newSilver = Math.floor(remainingCopper / 10);
       const newCopper = remainingCopper % 10;
 
-      setCoins({
+      updateCoins({
         gold: newGold,
         silver: newSilver,
         copper: newCopper
@@ -522,11 +507,11 @@ function App() {
 
   const handleSellItem = (item: ItemData, sellPrice: { gold: number; silver: number; copper: number }) => {
     // Use the provided sell price (already adjusted with markup)
-    setCoins((prev: typeof coins) => ({
-      gold: prev.gold + sellPrice.gold,
-      silver: prev.silver + sellPrice.silver,
-      copper: prev.copper + sellPrice.copper
-    }));
+    updateCoins({
+      gold: coins.gold + sellPrice.gold,
+      silver: coins.silver + sellPrice.silver,
+      copper: coins.copper + sellPrice.copper
+    });
 
     // Remove from inventory
     setInventory((items: ItemData[]) => items.filter((i: ItemData) => i.id !== item.id));
@@ -701,7 +686,7 @@ function App() {
                     onUseItem={handleUseItem}
                     strScore={abilities.str.score}
                     coins={coins}
-                    onUpdateCoins={handleUpdateCoins}
+                    onUpdateCoins={updateCoins}
                   />
                 </div>
               </div>

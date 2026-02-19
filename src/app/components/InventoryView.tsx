@@ -10,22 +10,19 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from './ui/context-menu';
+import { Coins as CharacterCoins } from '../types';
 
 interface InventoryViewProps {
   items: ItemData[];
+  strScore: number;
+  coins: CharacterCoins;
   onToggleEquipped: (id: string) => void;
   onOpenShop: () => void;
   onAddItem: (item: ItemData) => void;
   onUpdateItem: (item: ItemData) => void;
   onRemoveItem: (id: string) => void;
   onUseItem: (id: string) => void;
-  strScore: number;
-  coins: {
-    gold: number;
-    silver: number;
-    copper: number;
-  };
-  onUpdateCoins: (gold: number, silver: number, copper: number) => void;
+  onUpdateCoins: (coins: CharacterCoins) => void;
 }
 
 export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, onUpdateItem, onRemoveItem, onUseItem, strScore, coins, onUpdateCoins }: InventoryViewProps) {
@@ -104,7 +101,7 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
             <div className="text-xs uppercase text-gray-600">Gold</div>
             <EditableStatField
               value={coins.gold}
-              onUpdate={(value) => onUpdateCoins(value, coins.silver, coins.copper)}
+              onUpdate={(value) => onUpdateCoins({ ...coins, gold: value })}
               className="text-lg font-black"
               min={0}
             />
@@ -113,7 +110,7 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
             <div className="text-xs uppercase text-gray-600">Silver</div>
             <EditableStatField
               value={coins.silver}
-              onUpdate={(value) => onUpdateCoins(coins.gold, value, coins.copper)}
+              onUpdate={(value) => onUpdateCoins({ ...coins, silver: value })}
               className="text-lg font-black"
               min={0}
             />
@@ -122,7 +119,7 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
             <div className="text-xs uppercase text-gray-600">Copper</div>
             <EditableStatField
               value={coins.copper}
-              onUpdate={(value) => onUpdateCoins(coins.gold, coins.silver, value)}
+              onUpdate={(value) => onUpdateCoins({ ...coins, copper: value })}
               className="text-lg font-black"
               min={0}
             />
