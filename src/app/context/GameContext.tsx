@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react';
 import { GameState, GameActions, Ability, Talent, Spell, ItemData, Coins, ImportCharacter } from '../types';
-import { importSpells } from '../importCharacterUtils';
+import { importGear, importSpells } from '../importCharacterUtils';
+import { useItem } from '../characterUtils';
 
 // Initial state
 const initialState: GameState = {
@@ -58,6 +59,8 @@ type GameAction =
   | { type: 'ADD_ITEM'; payload: ItemData }
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_ITEM'; payload: { id: string; updates: Partial<ItemData> } }
+  | { type: 'USE_ITEM'; payload: string }
+  | { type: 'TOGGLE_EQUIPPED'; payload: string }
   | { type: 'UPDATE_COINS'; payload: Coins }
   | { type: 'UPDATE_NOTES'; payload: string }
   | { type: 'IMPORT_CHARACTER'; payload: ImportCharacter }
@@ -134,7 +137,21 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           i.id === action.payload.id ? { ...i, ...action.payload.updates } : i
         )
       };
-    
+
+    case 'USE_ITEM':
+      return {
+        ...state,
+        inventory: useItem(state.inventory, action.payload)
+      };
+
+    case 'TOGGLE_EQUIPPED':
+      return {
+        ...state,
+        inventory: state.inventory.map(i => 
+          i.id === action.payload ? { ...i, equipped: !i.equipped } : i
+        )
+      };
+
     case 'UPDATE_COINS':
       return { ...state, coins: action.payload };
     
@@ -191,6 +208,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           silver: payload.silver || 0,
           copper: payload.copper || 0,
         },
+        inventory: importGear(payload.gear || [])
       };
     
     case 'EXPORT_CHARACTER':
@@ -265,6 +283,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     updateItem: (id, updates) => 
       dispatch({ type: 'UPDATE_ITEM', payload: { id, updates } }),
+
+    useItem: (id) => 
+      dispatch({ type: 'USE_ITEM', payload: id }),
+    
+    toggleEquipped: (id) => 
+      dispatch({ type: 'TOGGLE_EQUIPPED', payload: id }),
     
     updateCoins: (coins) => 
       dispatch({ type: 'UPDATE_COINS', payload: coins }),

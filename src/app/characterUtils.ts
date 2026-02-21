@@ -41,3 +41,21 @@ export function calculateAC(inventory: ItemData[], acBonus: number, dexBonus: nu
   
   return ac;
 };
+
+export function useItem(inventory: ItemData[], id: string): ItemData[] {
+  return inventory.map((item: ItemData) => {
+    if (item.id === id) {
+      const newCurrentUnits = (item.currentUnits || 0) - 1;
+
+      if (newCurrentUnits <= 0) return null;
+      
+      return {
+        ...item,
+        currentUnits: newCurrentUnits
+      };
+    }
+
+    return item;
+  })
+  .filter((item): item is ItemData => item !== null);
+}

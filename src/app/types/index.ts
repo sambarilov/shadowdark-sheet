@@ -1,5 +1,7 @@
 // Domain types for the Shadowdark character sheet
 
+export type ItemType = 'weapon' | 'armor' | 'shield' | 'consumable' | 'gear' | 'treasure';
+
 export interface Ability {
   name: string;
   shortName: string;
@@ -34,14 +36,16 @@ export interface Spell extends Omit<SpellData, 'source'> {
 export interface ItemData {
   id: string;
   name: string;
-  type: string;
-  description?: string;
-  slots?: number;
-  value?: {
-    gold?: number;
-    silver?: number;
-    copper?: number;
+  type: ItemType;
+  description: string;
+  slots: number;
+  value: {
+    gold: number;
+    silver: number;
+    copper: number;
   };
+  currentUnits: number;
+  totalUnits: number;
   equipped?: boolean;
   damage?: string;
   weaponAbility?: string;
@@ -49,9 +53,6 @@ export interface ItemData {
   damageBonus?: string;
   armorAC?: number;
   shieldACBonus?: number;
-  totalUnits?: number;
-  currentUnits?: number;
-  unitsPerSlot?: number;
 }
 
 export interface Coins {
@@ -160,6 +161,7 @@ export interface ImportCharacter extends ShadowdarklingsCharacter {
   hitPoints: number;
   acBonus: number;
   spells: Spell[];
+  inventory: ItemData[];
 }
 
 export interface Trait extends ShadowdarklingsBonus {}
@@ -238,7 +240,9 @@ export interface GameActions {
   addItem: (item: ItemData) => void;
   removeItem: (id: string) => void;
   updateItem: (id: string, updates: Partial<ItemData>) => void;
+  toggleEquipped: (id: string) => void;
   updateCoins: (coins: Coins) => void;
+  useItem: (id: string) => void;
   
   // Session Actions
   updateNotes: (notes: string) => void;

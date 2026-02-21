@@ -5,35 +5,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { ItemType, ItemData } from '../types';
 
-export type ItemType = 'weapon' | 'armor' | 'shield' | 'consumable' | 'gear' | 'treasure';
-
-export interface ItemData {
-  id: string;
-  name: string;
-  type: ItemType;
-  description: string;
-  equipped: boolean;
-  value: {
-    gold: number;
-    silver: number;
-    copper: number;
-  };
-  slots: number;
-  // Weapon specific
-  weaponAbility?: string;
-  damage?: string;
-  attackBonus?: number;
-  damageBonus?: string;
-  // Armor specific
-  armorAC?: number;
-  // Shield specific
-  shieldACBonus?: number;
-  // Consumable specific
-  totalUnits: number;
-  currentUnits?: number;
-  unitsPerSlot?: number;
-}
 
 interface EditItemDialogProps {
   open: boolean;
@@ -66,7 +39,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
   // Consumable fields
   const [totalUnits, setTotalUnits] = useState(item?.totalUnits || 1);
   const [currentUnits, setCurrentUnits] = useState(item?.currentUnits || item?.totalUnits || 1);
-  const [unitsPerSlot, setUnitsPerSlot] = useState(item?.unitsPerSlot || 1);
 
   // Update form fields when item changes
   useEffect(() => {
@@ -86,7 +58,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setShieldACBonus(item.shieldACBonus || 0);
       setTotalUnits(item.totalUnits || 1);
       setCurrentUnits(item.currentUnits || item.totalUnits || 1);
-      setUnitsPerSlot(item.unitsPerSlot || (item.totalUnits || 1) / (item.slots || 1));
     } else {
       // Reset form for new item
       setName('');
@@ -104,7 +75,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
       setShieldACBonus(0);
       setTotalUnits(1);
       setCurrentUnits(1);
-      setUnitsPerSlot(1);
     }
   }, [item]);
 
@@ -118,6 +88,8 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         equipped: item?.equipped || false,
         value: { gold, silver, copper },
         slots,
+        totalUnits,
+        currentUnits
       };
 
       if (type === 'weapon') {
@@ -129,10 +101,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         itemData.armorAC = armorAC;
       } else if (type === 'shield') {
         itemData.shieldACBonus = shieldACBonus;
-      } else if (type === 'consumable') {
-        itemData.totalUnits = totalUnits;
-        itemData.currentUnits = currentUnits;
-        itemData.unitsPerSlot = unitsPerSlot;
       }
 
       onSave(itemData);
@@ -153,7 +121,6 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
         setShieldACBonus(0);
         setTotalUnits(1);
         setCurrentUnits(1);
-        setUnitsPerSlot(1);
       }
     }
   };
@@ -293,20 +260,14 @@ export function EditItemDialog({ open, onClose, onSave, item }: EditItemDialogPr
             <>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="font-black">Units Per Slot</Label>
+                  <Label className="font-black">Total Units</Label>
                   <Input
                     type="number"
-                    value={unitsPerSlot}
-                    onChange={(e) => {
-                      const newTotal = parseInt(e.target.value) || 1;
-                      setUnitsPerSlot(newTotal);
-                      setTotalUnits(newTotal);
-                      if (currentUnits > newTotal) {
-                        setCurrentUnits(newTotal);
-                      }
-                    }}
+                    value={totalUnits}
+                    onChange={(e) => setTotalUnits(Math.max(parseInt(e.target.value) || 1, 1))}
                     className="border-2 border-black mt-1"
-                    min={1}
+                    min={0}
+                    max={totalUnits}
                   />
                 </div>
                 <div>

@@ -8,52 +8,12 @@ import { DiceRollerDrawer } from './components/DiceRollerDrawer';
 import { EditSpellDialog } from './components/dialogs/EditSpellDialog';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
-import { ItemType } from './components/EditItemDialog';
 import { ImportDialog } from './components/dialogs/ImportDialog';
 import { ExportDialog } from './components/dialogs/ExportDialog';
 import { useGame } from './context/GameContext';
-import type { Spell, Talent } from './types';
+import type { Spell } from './types';
 import { calculateAC, abilityModifier } from './characterUtils';
 
-// Weapon stats lookup database
-const WEAPON_STATS: Record<string, { damage: string; weaponAbility?: string; attackBonus?: number }> = {
-  'Dagger': { damage: '1d4', weaponAbility: 'STR' },
-  'Dagger (obsidian)': { damage: '1d4', weaponAbility: 'STR' },
-  'Shortsword': { damage: '1d6', weaponAbility: 'STR' },
-  'Longsword': { damage: '1d8', weaponAbility: 'STR' },
-  'Greatsword': { damage: '1d12', weaponAbility: 'STR' },
-  'Mace': { damage: '1d6', weaponAbility: 'STR' },
-  'Warhammer': { damage: '1d10', weaponAbility: 'STR' },
-  'Spear': { damage: '1d6', weaponAbility: 'STR' },
-  'Staff': { damage: '1d6', weaponAbility: 'STR' },
-  'Javelin': { damage: '1d6', weaponAbility: 'STR' },
-  'Club': { damage: '1d4', weaponAbility: 'STR' },
-  'Crossbow': { damage: '1d6', weaponAbility: 'DEX' },
-  'Longbow': { damage: '1d8', weaponAbility: 'DEX' },
-  'Shortbow': { damage: '1d6', weaponAbility: 'DEX' },
-};
-
-// Armor stats lookup database (AC values)
-const ARMOR_STATS: Record<string, { armorAC: number }> = {
-  'Leather armor': { armorAC: 11 },
-  'Studded leather': { armorAC: 12 },
-  'Chainmail': { armorAC: 14 },
-  'Chain mail': { armorAC: 14 },
-  'Plate armor': { armorAC: 16 },
-  'Plate mail': { armorAC: 16 },
-  'Mithral chainmail': { armorAC: 15 },
-  'Mithral chain mail': { armorAC: 15 },
-  'Half plate': { armorAC: 15 },
-  'Scale mail': { armorAC: 13 },
-};
-
-// Shield stats lookup database (AC bonus)
-const SHIELD_STATS: Record<string, { shieldACBonus: number }> = {
-  'Shield': { shieldACBonus: 2 },
-  'Wooden shield': { shieldACBonus: 2 },
-  'Mithral shield': { shieldACBonus: 2 },
-  'Tower shield': { shieldACBonus: 3 },
-};
 
 function App() {
   const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('attributes');
@@ -72,7 +32,6 @@ function App() {
   const [buyMarkup, setBuyMarkup] = useState(0);
   const [sellMarkup, setSellMarkup] = useState(-50);
   
-  const [inventory, setInventory] = useState<ItemData[]>([]);
 
   const [shopItems, setShopItems] = useState<ItemData[]>([]);
 
@@ -96,7 +55,8 @@ function App() {
       acBonus,
       notes,
       spells,
-      coins
+      coins,
+      inventory
     },
     actions: {
       updateCharacterAttribute,
@@ -113,7 +73,12 @@ function App() {
       toggleSpell,
       updateSpell,
       removeSpell,
-      updateCoins
+      updateCoins,
+      addItem,
+      removeItem,
+      updateItem,
+      useItem,
+      toggleEquipped,
     }
   } = useGame();
 
@@ -147,7 +112,6 @@ function App() {
         shieldACBonus: item.shieldACBonus || undefined,
         totalUnits: item.totalUnits || undefined,
         currentUnits: item.currentUnits || undefined,
-        unitsPerSlot: item.unitsPerSlot || undefined
       }));
       
       // Build spellsKnown string
@@ -281,184 +245,9 @@ function App() {
       }
     }
 
-    // Map gear to inventory
-    if (json.gear) {
-      const ITEMS_PER_TYPE: Record<string, ItemType> = {
-        'Arrows': 'consumable',
-        'Crossbow bolts': 'consumable',
-        'Iron spikes': 'consumable',
-        'Rations': 'consumable',
-        'Shield': 'shield',
-        'Leather armor': 'armor',
-        'Oil, flask': 'consumable',
-        'Chainmail': 'armor',
-        'Plate armor': 'armor',
-        'Mithral chainmail': 'armor',
-        'Mithral shield': 'shield',
-        'Torch': 'consumable'
-      }
-
-      const itemType = (item: any): ItemType => {
-        if (item.type == 'weapon') return 'weapon';
-       
-        return ITEMS_PER_TYPE[item.name] || 'gear';
-      }
-
-      const newInventory: any[] = json.gear.map((item: any) => {
-        const itemData: any = {
-          id: item.instanceId || `item-${Math.random()}`,
-          name: item.name || 'Unknown Item',
-          type: itemType(item),
-          equipped: item.equipped || false,
-          description: item.description || '',
-          quantity: item.quantity || 1, // Keep temporarily for splitting
-          value: { 
-            gold: item.currency === 'gp' ? item.cost : 0,
-            silver: item.currency === 'sp' ? item.cost : 0,
-            copper: item.currency === 'cp' ? item.cost : 0
-          },
-          slots: item.slots || 1
-        };
-
-        // Look up weapon stats if this is a weapon
-        if (itemType(item) === 'weapon') {
-          const weaponStats = WEAPON_STATS[item.name];
-          if (weaponStats) {
-            itemData.damage = weaponStats.damage;
-            itemData.weaponAbility = weaponStats.weaponAbility || 'STR';
-            itemData.attackBonus = weaponStats.attackBonus || 0;
-          } else {
-            // Default values for unknown weapons
-            itemData.damage = item.damage || '1d6';
-            itemData.weaponAbility = item.weaponAbility || 'STR';
-            itemData.attackBonus = item.attackBonus || 0;
-          }
-          // Always check for damageBonus in the imported data
-          itemData.damageBonus = item.damageBonus || undefined;
-        } else if (itemType(item) === 'armor') {
-          // Look up armor stats
-          const armorStats = ARMOR_STATS[item.name];
-          if (armorStats) {
-            itemData.armorAC = armorStats.armorAC;
-          } else {
-            itemData.armorAC = item.armorAC || undefined;
-          }
-        } else if (itemType(item) === 'shield') {
-          // Look up shield stats
-          const shieldStats = SHIELD_STATS[item.name];
-          if (shieldStats) {
-            itemData.shieldACBonus = shieldStats.shieldACBonus;
-          } else {
-            itemData.shieldACBonus = item.shieldACBonus || undefined;
-          }
-        } else {
-          // Non-weapon/armor/shield items can still have these if provided
-          itemData.damage = item.damage || undefined;
-          itemData.attackBonus = item.attackBonus || undefined;
-          itemData.damageBonus = item.damageBonus || undefined;
-          itemData.weaponAbility = item.weaponAbility || undefined;
-          itemData.armorAC = item.armorAC || undefined;
-          itemData.shieldACBonus = item.shieldACBonus || undefined;
-        }
-
-        if (item.totalUnits !== undefined) {
-          itemData.totalUnits = item.totalUnits;
-          itemData.unitsPerSlot = item.unitsPerSlot || item.totalUnits || 1;
-          itemData.currentUnits = item.currentUnits !== undefined ? item.currentUnits : item.totalUnits;
-        }
-
-        return itemData;
-      });
-      
-      // Expand items with quantity > 1 into individual items
-      const expandedInventory: ItemData[] = [];
-      newInventory.forEach((item: any) => {
-        const quantity = item.quantity || 1;
-        if (quantity > 1) {
-          // Create individual items for each quantity, dividing slots and totalUnits
-          const slotsPerItem = Math.ceil(item.slots / quantity);
-          const totalUnitsPerItem = Math.floor(item.totalUnits / quantity);
-          const currentUnitsPerItem = item.currentUnits ? Math.floor(item.currentUnits / quantity) : undefined;
-          
-          for (let i = 0; i < quantity; i++) {
-            const { quantity: _, ...itemWithoutQuantity } = item;
-            expandedInventory.push({
-              ...itemWithoutQuantity,
-              id: `${item.id}-${i}`,
-              slots: slotsPerItem,
-              totalUnits: totalUnitsPerItem,
-              currentUnits: currentUnitsPerItem,
-              unitsPerSlot: currentUnitsPerItem,
-            });
-          }
-        } else {
-          const { quantity: _, ...itemWithoutQuantity } = item;
-          expandedInventory.push(itemWithoutQuantity);
-        }
-      });
-      
-      setInventory(expandedInventory);
-    }
-
     setCharacterImported(true);
     toast.success('Character imported successfully!');
-  };
-
-  const handleToggleEquipped = (id: string) => {
-    setInventory((items: ItemData[]) =>
-      items.map((item: ItemData) =>
-        item.id === id ? { ...item, equipped: !item.equipped } : item
-      )
-    );
-  };
-
-  const handleAddItem = (item: ItemData) => {
-    setInventory((items: ItemData[]) => [...items, item]);
-  };
-
-  const handleUpdateItem = (item: ItemData) => {
-    setInventory((items: ItemData[]) =>
-      items.map((i: ItemData) => (i.id === item.id ? item : i))
-    );
-  };
-
-  const handleRemoveItem = (id: string) => {
-    setInventory((items: ItemData[]) => items.filter((item: ItemData) => item.id !== id));
-  };
-
-  const handleUseItem = (id: string) => {
-    setInventory((items: ItemData[]) => 
-      items.map((item: ItemData) => {
-        if (item.id === id) {
-          // Use unitsPerSlot/currentUnits system
-          if (item.unitsPerSlot !== undefined && item.currentUnits !== undefined) {
-            let newCurrentUnits = item.currentUnits - 1;
-            let newQuantity = Math.ceil(newCurrentUnits / item.unitsPerSlot);
-            
-            if (newQuantity < 1) {
-              toast.success(`${item.name} consumed!`);
-              return null;
-            }
-            
-            // Calculate total remaining units across all quantities
-            // Full quantities (newQuantity - 1) plus the partial current quantity
-            const totalRemaining = (newQuantity - 1) * item.unitsPerSlot + newCurrentUnits;
-            toast.success(`Used ${item.name}. ${totalRemaining} unit${totalRemaining !== 1 ? 's' : ''} remaining.`);
-            return { ...item, slots: newQuantity, currentUnits: newCurrentUnits };
-          }
-        }
-        return item;
-      }).filter((item): item is ItemData => item !== null)
-    );
-  };
-
-  const handleAddTalent = (talent: Talent) => {
-    addTalent(talent);
-  };
-
-  const handleRemoveTalent = (id: string) => {
-    removeTalent(id);
-  };
+  }
 
   const formatPrice = (price: { gold: number; silver: number; copper: number }) => {
     const parts = [];
@@ -490,11 +279,12 @@ function App() {
       // Add item to inventory (create new instance with unique ID)
       const newItem: ItemData = {
         ...shopItem,
-        id: `item-${Date.now()}`,
+        id: `item-${Math.random()}`,
+        currentUnits: shopItem.totalUnits,
         equipped: false
       };
 
-      setInventory((items: ItemData[]) => [...items, newItem]);
+      addItem(newItem);
       toast.success(`Purchased ${shopItem.name}!`, {
         description: `Spent ${formatPrice(shopItem.value)}`
       });
@@ -514,7 +304,7 @@ function App() {
     });
 
     // Remove from inventory
-    setInventory((items: ItemData[]) => items.filter((i: ItemData) => i.id !== item.id));
+    removeItem(item.id);
     
     toast.success(`Sold ${item.name}!`, {
       description: `Received ${formatPrice(sellPrice)}`
@@ -553,16 +343,7 @@ function App() {
   });
 
   const weapons = inventory
-    .filter((item: ItemData) => item.type === 'weapon' && item.damage)
-    .map((item: ItemData) => ({
-      id: item.id,
-      name: item.name,
-      damage: item.damage!,
-      weaponAbility: item.weaponAbility || 'STR',
-      equipped: item.equipped,
-      attackBonus: item.attackBonus || 0,
-      damageBonus: item.damageBonus
-    }));
+    .filter(item => item.type === 'weapon')
 
   return (
     <div className="min-h-screen bg-white flex items-start justify-center">
@@ -640,8 +421,8 @@ function App() {
                     onUpdateLanguages={(value) => updateCharacterAttribute('languages', value)}
                     onUpdateAttribute={updateCharacterAttribute}
                     onUpdateAbilities={updateAbilities}
-                    onAddTalent={handleAddTalent}
-                    onRemoveTalent={handleRemoveTalent}
+                    onAddTalent={addTalent}
+                    onRemoveTalent={removeTalent}
                     onImportCharacter={handleOpenImportDialog}
                     onExportCharacter={exportCharacter}
                   />
@@ -678,12 +459,12 @@ function App() {
                 <div className="w-full flex-shrink-0 p-4 overflow-y-auto overflow-x-hidden lg:w-1/3">
                   <InventoryView
                     items={inventory}
-                    onToggleEquipped={handleToggleEquipped}
+                    onToggleEquipped={toggleEquipped}
                     onOpenShop={() => setShowShop(true)}
-                    onAddItem={handleAddItem}
-                    onUpdateItem={handleUpdateItem}
-                    onRemoveItem={handleRemoveItem}
-                    onUseItem={handleUseItem}
+                    onAddItem={addItem}
+                    onUpdateItem={(item) => updateItem(item.id, item)}
+                    onRemoveItem={removeItem}
+                    onUseItem={useItem}
                     strScore={abilities.str.score}
                     coins={coins}
                     onUpdateCoins={updateCoins}

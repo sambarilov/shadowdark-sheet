@@ -1,7 +1,7 @@
 import { Package, ShoppingBag, Coins, Plus } from 'lucide-react';
 import { Switch } from './ui/switch';
 import { Button } from './ui/button';
-import { EditItemDialog, type ItemData } from './EditItemDialog';
+import { EditItemDialog } from './EditItemDialog';
 import { EditableStatField } from './EditableStatField';
 import { useState } from 'react';
 import {
@@ -10,7 +10,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from './ui/context-menu';
-import { Coins as CharacterCoins } from '../types';
+import { Coins as CharacterCoins, ItemData } from '../types';
 
 interface InventoryViewProps {
   items: ItemData[];
@@ -47,10 +47,8 @@ export function InventoryView({ items, onToggleEquipped, onOpenShop, onAddItem, 
     if (item.shieldACBonus !== undefined) details.push(`AC +${item.shieldACBonus}`);
     
     // Show currentUnits/totalUnits across all quantities
-    if (item.unitsPerSlot !== undefined && item.currentUnits !== undefined && item.unitsPerSlot > 1) {
-      const totalCurrentUnits = item.currentUnits;
-      const totalMaxUnits = item.totalUnits || item.unitsPerSlot;
-      details.push(`Units: ${totalCurrentUnits}/${totalMaxUnits}`);
+    if (item.totalUnits > 1) {
+      details.push(`Units: ${item.currentUnits}/${item.totalUnits}`);
     }
     
     return details.join(' ');

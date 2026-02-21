@@ -9,26 +9,16 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from './ui/context-menu';
-import type { Ability, Spell } from '../types';
+import type { Ability, ItemData, Spell } from '../types';
 import { abilityModifier } from '../characterUtils';
 import { SpellField } from './character/Spell';
-
-interface Weapon {
-  id: string;
-  name: string;
-  damage: string;
-  weaponAbility: string;
-  equipped: boolean;
-  attackBonus?: number;
-  damageBonus?: string;
-}
 
 interface PlayerViewProps {
   hp: number;
   maxHp: number;
   ac: number;
   acBonus: number;
-  weapons: Weapon[];
+  weapons: ItemData[];
   spells: Spell[];
   abilities: Record<string, Ability>;
   weaponBonuses: Record<string, number>;
@@ -50,9 +40,9 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     return Math.floor(Math.random() * sides) + 1;
   };
 
-  const handleAttackRoll = (weapon: Weapon, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
+  const handleAttackRoll = (weapon: ItemData, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
     // Get selected ability or default to weapon's ability
-    const selectedAbility = weaponAbilities[weapon.id] || weapon.weaponAbility;
+    const selectedAbility = weaponAbilities[weapon.id] || weapon.weaponAbility || 'STR';
     const ability = abilities[selectedAbility];
     const abilityBonus = abilityModifier(ability.score);
 
@@ -86,7 +76,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
     const isCritical = attackRoll === 20;
 
     // Roll damage
-    const damageDieMatch = weapon.damage.match(/d(\d+)/);
+    const damageDieMatch = (weapon.damage || '1d6').match(/d(\d+)/);
     const damageDie = damageDieMatch ? parseInt(damageDieMatch[1]) : 6;
     const damageRoll1 = rollDice(damageDie);
     const damageRoll2 = isCritical ? rollDice(damageDie) : 0;
@@ -220,7 +210,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
                     />
                     <span>+</span>
                     <EditableAbilityField
-                      value={weaponAbilities[weapon.id] || weapon.weaponAbility}
+                      value={weaponAbilities[weapon.id] || weapon.weaponAbility || 'STR'}
                       onUpdate={(value) => setWeaponAbilities({ ...weaponAbilities, [weapon.id]: value })}
                       className="text-sm"
                     />
