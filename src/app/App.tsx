@@ -56,7 +56,8 @@ function App() {
       notes,
       spells,
       coins,
-      inventory
+      inventory,
+      shop,
     },
     actions: {
       updateCharacterAttribute,
@@ -168,7 +169,8 @@ function App() {
           shopItems,
           buyMarkup,
           sellMarkup
-        }
+        },
+        version: '2'
       };
       
       // Create JSON and show export dialog

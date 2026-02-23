@@ -32,11 +32,14 @@ const initialState: GameState = {
   inventory: [],
   coins: { gold: 0, silver: 0, copper: 0 },
   spells: [],
-  shopItems: [],
-  buyMarkup: 0,
-  sellMarkup: -50,
+  shop: {
+    shopItems: [],
+    buyMarkup: 0,
+    sellMarkup: -50,
+  },
   notes: '',
-  characterImported: false
+  characterImported: false,
+  version: ''
 };
 
 // Action types
@@ -217,7 +220,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           silver: payload.silver || 0,
           copper: payload.copper || 0,
         },
-        inventory: importGear(payload.gear || [])
+        inventory: importGear(payload.gear || []),
+        shop: {
+          shopItems: payload.shop.shopItems || [],
+          buyMarkup: payload.shop.buyMarkup || 0,
+          sellMarkup: payload.shop.sellMarkup || -50,
+        },
+        notes: payload.notes || '',
+        version: payload.version || '1'
       };
     
     case 'EXPORT_CHARACTER':

@@ -1,5 +1,4 @@
 // Domain types for the Shadowdark character sheet
-
 export type ItemType = 'weapon' | 'armor' | 'shield' | 'consumable' | 'gear' | 'treasure';
 
 export interface Ability {
@@ -94,13 +93,20 @@ export interface GameState {
   inventory: ItemData[];
   coins: Coins;
   spells: Spell[];
-  shopItems: ItemData[];
-  buyMarkup: number;
-  sellMarkup: number;
   
   // Session State
   notes: string;
   characterImported: boolean;
+  version: string;
+
+  // Shop
+  shop: Shop;
+}
+
+export interface Shop {
+  shopItems: ItemData[];
+  buyMarkup: number;
+  sellMarkup: number;
 }
 
 export interface ShadowdarklingsCharacter {
@@ -162,6 +168,9 @@ export interface ImportCharacter extends ShadowdarklingsCharacter {
   acBonus: number;
   spells: Spell[];
   inventory: ItemData[];
+  shop: Shop;
+  notes: string;
+  version: string;
 }
 
 export interface Trait extends ShadowdarklingsBonus {}
