@@ -222,6 +222,7 @@ export interface GameActions {
   
   // Talent Actions
   addTalent: (talent: Talent) => void;
+  updateTalent: (id: string, updates: Partial<Talent>) => void;
   removeTalent: (id: string) => void;
   
   // Combat Actions

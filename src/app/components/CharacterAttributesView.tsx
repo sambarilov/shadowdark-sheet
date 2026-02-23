@@ -55,6 +55,7 @@ export function CharacterAttributesView({
   onUpdateAttribute,
   onUpdateAbilities,
   onAddTalent,
+  onUpdateTalent,
   onRemoveTalent,
   onImportCharacter,
   onExportCharacter
@@ -274,7 +275,11 @@ export function CharacterAttributesView({
           setEditingTalent(undefined);
         }}
         onSave={(talent) => {
-          onAddTalent(talent);
+          if (editingTalent) {
+            onUpdateTalent(editingTalent.id, talent);
+          } else {
+            onAddTalent(talent);
+          }
           setShowTalentDialog(false);
           setEditingTalent(undefined);
         }}

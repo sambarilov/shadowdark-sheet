@@ -47,6 +47,7 @@ type GameAction =
   | { type: 'UPDATE_XP'; payload: { current: number; total: number } }
   | { type: 'TOGGLE_LUCK_TOKEN' }
   | { type: 'ADD_TALENT'; payload: Talent }
+  | { type: 'UPDATE_TALENT'; payload: { id: string; updates: Partial<Talent> } }
   | { type: 'REMOVE_TALENT'; payload: string }
   | { type: 'UPDATE_HP'; payload: number }
   | { type: 'UPDATE_MAX_HP'; payload: number }
@@ -89,6 +90,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     
     case 'REMOVE_TALENT':
       return { ...state, talents: state.talents.filter(t => t.id !== action.payload) };
+    
+    case 'UPDATE_TALENT':
+      return {
+        ...state,
+        talents: state.talents.map(t => 
+          t.id === action.payload.id ? { ...t, ...action.payload.updates } : t
+        )
+      };
     
     case 'UPDATE_HP':
       return { ...state, hitPoints: action.payload };
@@ -250,6 +259,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     removeTalent: (id) => 
       dispatch({ type: 'REMOVE_TALENT', payload: id }),
+  
+    updateTalent: (id, updates) =>
+      dispatch({ type: 'UPDATE_TALENT', payload: { id, updates } }),
     
     updateHP: (hp) => 
       dispatch({ type: 'UPDATE_HP', payload: hp }),

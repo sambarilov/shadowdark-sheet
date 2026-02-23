@@ -64,6 +64,7 @@ function App() {
       importCharacter,
       exportCharacter,
       addTalent,
+      updateTalent,
       removeTalent,
       updateHP,
       updateMaxHP,
@@ -422,6 +423,7 @@ function App() {
                     onUpdateAttribute={updateCharacterAttribute}
                     onUpdateAbilities={updateAbilities}
                     onAddTalent={addTalent}
+                    onUpdateTalent={updateTalent}
                     onRemoveTalent={removeTalent}
                     onImportCharacter={handleOpenImportDialog}
                     onExportCharacter={exportCharacter}
