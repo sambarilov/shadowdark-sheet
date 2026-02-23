@@ -37,6 +37,7 @@ interface CharacterAttributesViewProps {
   onUpdateAttribute: (name: string, value: string) => void;
   onUpdateAbilities: (abilities: Record<string, Ability>) => void;
   onAddTalent: (talent: Talent) => void;
+  onUpdateTalent: (id: string, updates: Partial<Talent>) => void;
   onRemoveTalent: (id: string) => void;
   onImportCharacter: () => void;
   onExportCharacter: () => void;

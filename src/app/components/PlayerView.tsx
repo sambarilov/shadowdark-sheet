@@ -43,7 +43,7 @@ export function PlayerView({ hp, maxHp, ac, acBonus, weapons, spells, abilities,
   const handleAttackRoll = (weapon: ItemData, mode: 'normal' | 'advantage' | 'disadvantage' = 'normal') => {
     // Get selected ability or default to weapon's ability
     const selectedAbility = weaponAbilities[weapon.id] || weapon.weaponAbility || 'STR';
-    const ability = abilities[selectedAbility];
+    const ability = abilities[selectedAbility.toLowerCase()];
     const abilityBonus = abilityModifier(ability.score);
 
     // Get weapon attack bonus
