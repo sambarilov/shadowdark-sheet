@@ -1,5 +1,5 @@
 
-import { ItemData } from "./types";
+import { Coins, ItemData } from "./types";
 
 export function abilityModifier(value: string | number): number {
   const numValue = typeof value === 'string' ? parseInt(value) : value;

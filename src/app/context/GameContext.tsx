@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, ReactNode } from 'react';
 import { GameState, GameActions, Ability, Talent, Spell, ItemData, Coins, ImportCharacter } from '../types';
 import { importGear, importSpells } from '../importCharacterUtils';
 import { useItem } from '../characterUtils';
+import { applyPriceToCoins, canBuyItem } from '../shopUtils';
 
 // Initial state
 const initialState: GameState = {
@@ -33,7 +34,7 @@ const initialState: GameState = {
   coins: { gold: 0, silver: 0, copper: 0 },
   spells: [],
   shop: {
-    shopItems: [],
+    items: [],
     buyMarkup: 0,
     sellMarkup: -50,
   },
@@ -68,7 +69,14 @@ type GameAction =
   | { type: 'UPDATE_COINS'; payload: Coins }
   | { type: 'UPDATE_NOTES'; payload: string }
   | { type: 'IMPORT_CHARACTER'; payload: ImportCharacter }
-  | { type: 'EXPORT_CHARACTER' };
+  | { type: 'EXPORT_CHARACTER' }
+  | { type: 'ADD_SHOP_ITEM'; payload: ItemData }
+  | { type: 'REMOVE_SHOP_ITEM'; payload: string }
+  | { type: 'UPDATE_SHOP_ITEM'; payload: { id: string; updates: Partial<ItemData> } }
+  | { type: 'UPDATE_BUY_MARKUP'; payload: number }
+  | { type: 'UPDATE_SELL_MARKUP'; payload: number }
+  | { type: 'ON_BUY_ITEM'; payload: string }
+  | { type: 'ON_SELL_ITEM'; payload: string };
 
 // Reducer function
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -169,6 +177,74 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     
     case 'UPDATE_NOTES':
       return { ...state, notes: action.payload };
+
+    case 'ADD_SHOP_ITEM':
+      return {
+        ...state,
+        shop: {
+          ...state.shop,
+          items: [...state.shop.items, action.payload]
+        }
+      };
+
+    case 'REMOVE_SHOP_ITEM':
+      return {
+        ...state,
+        shop: {
+          ...state.shop,
+          items: state.shop.items.filter(i => i.id !== action.payload)
+        }
+      };
+
+    case 'UPDATE_SHOP_ITEM':
+      return {
+        ...state,
+        shop: {
+          ...state.shop,
+          items: state.shop.items.map(i => 
+            i.id === action.payload.id ? { ...i, ...action.payload.updates } : i
+          )
+        }
+      };
+
+    case 'UPDATE_BUY_MARKUP':
+      return {
+        ...state,
+        shop: {
+          ...state.shop,
+          buyMarkup: action.payload
+        }
+      };
+
+    case 'UPDATE_SELL_MARKUP':
+      return {
+        ...state,
+        shop: {
+          ...state.shop,
+          sellMarkup: action.payload
+        }
+      };
+
+    case 'ON_BUY_ITEM':
+      const itemToBuy = state.shop.items.find(i => i.id === action.payload);
+
+      if (!itemToBuy) return state;
+
+      const totalCost = {
+        gold: itemToBuy.value.gold * (1 + state.shop.buyMarkup / 100),
+        silver: itemToBuy.value.silver * (1 + state.shop.buyMarkup / 100),
+        copper: itemToBuy.value.copper * (1 + state.shop.buyMarkup / 100)
+      }
+
+      if (!canBuyItem(state.coins, totalCost)) {
+        return state;
+      }
+
+      return {
+        ...state,
+        coins: applyPriceToCoins(state.coins, totalCost),
+        inventory: [...state.inventory, { ...itemToBuy, id: `inv-${Date.now()}` }],
+      };
     
     case 'IMPORT_CHARACTER':
       const { payload } = action;
@@ -222,7 +298,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         },
         inventory: importGear(payload.gear || []),
         shop: {
-          shopItems: payload.shop.shopItems || [],
+          items: payload.shop.items || [],
           buyMarkup: payload.shop.buyMarkup || 0,
           sellMarkup: payload.shop.sellMarkup || -50,
         },
@@ -317,14 +393,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     updateNotes: (notes) => 
       dispatch({ type: 'UPDATE_NOTES', payload: notes }),
+
+    addShopItem: (item) => {
+      dispatch({ type: 'ADD_SHOP_ITEM', payload: item });
+    },
+
+    updateShopItem: (id, item) => {
+      dispatch({ type: 'UPDATE_SHOP_ITEM', payload: { id, updates: item } });
+    },
+
+    removeShopItem: (id) => {
+      dispatch({ type: 'REMOVE_SHOP_ITEM', payload: id });
+    },
+
+    buyItem: (item) => {
+      dispatch({ type: 'ON_BUY_ITEM', payload: item });
+    },
+
+    sellItem: (item) => {
+      dispatch({ type: 'ON_SELL_ITEM', payload: item });
+    },
+
+    updateBuyMarkup: (buyMarkup) => {
+      dispatch({ type: 'UPDATE_BUY_MARKUP', payload: buyMarkup });
+    },
+
+    updateSellMarkup: (sellMarkup) => {
+      dispatch({ type: 'UPDATE_SELL_MARKUP', payload: sellMarkup });
+    },
     
     importCharacter: (json: ImportCharacter) => {
       dispatch({ type: 'IMPORT_CHARACTER', payload: json });
     },
-    
-    exportCharacter: () => {
-      return ''
-    }
   };
 
   return (

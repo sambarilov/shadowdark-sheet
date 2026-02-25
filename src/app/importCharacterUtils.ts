@@ -65,7 +65,7 @@ export function importGear(gear: ShadowdarklingsGear[]): ItemData[] {
 
   const newInventory: ItemData[] = gear.map((item: any) => {
     let itemData: any = {
-      id: item.instanceId || `item-${Math.random()}`,
+      id: item.instanceId || `item-${Date.now()}`,
       name: item.name || 'Unknown Item',
       type: itemType(item),
       equipped: item.equipped || false,

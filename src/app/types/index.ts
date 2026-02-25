@@ -104,7 +104,7 @@ export interface GameState {
 }
 
 export interface Shop {
-  shopItems: ItemData[];
+  items: ItemData[];
   buyMarkup: number;
   sellMarkup: number;
 }
@@ -257,5 +257,13 @@ export interface GameActions {
   // Session Actions
   updateNotes: (notes: string) => void;
   importCharacter: (json: ImportCharacter) => void;
-  exportCharacter: () => string;
+
+  // Shop Actions
+  buyItem: (id: string) => void;
+  sellItem: (id: string, sellPrice: Coins) => void;
+  addShopItem: (item: ItemData) => void;
+  removeShopItem: (id: string) => void;
+  updateShopItem: (id: string, updates: Partial<ItemData>) => void;
+  updateBuyMarkup: (markup: number) => void;
+  updateSellMarkup: (markup: number) => void;
 }

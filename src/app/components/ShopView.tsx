@@ -12,7 +12,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from './ui/context-menu';
-import { EditItemDialog, type ItemData } from './EditItemDialog';
+import { EditItemDialog } from './EditItemDialog';
+import { ItemData } from '../types';
 
 interface ShopViewProps {
   onClose: () => void;

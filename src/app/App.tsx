@@ -32,9 +32,6 @@ function App() {
   const [buyMarkup, setBuyMarkup] = useState(0);
   const [sellMarkup, setSellMarkup] = useState(-50);
   
-
-  const [shopItems, setShopItems] = useState<ItemData[]>([]);
-
   const {
     state: {
       name, 
@@ -63,7 +60,6 @@ function App() {
       updateCharacterAttribute,
       updateAbilities,
       importCharacter,
-      exportCharacter,
       addTalent,
       updateTalent,
       removeTalent,
@@ -81,10 +77,15 @@ function App() {
       updateItem,
       useItem,
       toggleEquipped,
+      addShopItem,
+      updateShopItem,
+      removeShopItem,
+      updateBuyMarkup,
+      updateSellMarkup,
     }
   } = useGame();
 
-  const _exportCharacter = () => {
+  const exportCharacter = () => {
     try {
       // Get character name
       const characterName = name
@@ -165,11 +166,7 @@ function App() {
         copper: coins.copper,
         weaponBonuses,
         notes,
-        shop: {
-          shopItems,
-          buyMarkup,
-          sellMarkup
-        },
+        shop,
         version: '2'
       };
       
@@ -219,38 +216,13 @@ function App() {
     
     try {
       const parsedJson = JSON.parse(json);
-      processImportData(parsedJson); // TODO: this should go eventually
       importCharacter(parsedJson);
       setShowImportDialog(false);
+      toast.success('Character imported successfully!');
     } catch (error) {
       toast.error('Invalid JSON format');
     }
   };
-
-  const processImportData = (json: any) => {
-    // Continue with all the existing mapping logic...
-
-    // Map weapon bonuses
-    if (json.weaponBonuses) {
-      setWeaponBonuses(json.weaponBonuses);
-    }
-
-    // Map shop data
-    if (json.shop) {
-      if (json.shop.shopItems && Array.isArray(json.shop.shopItems)) {
-        setShopItems(json.shop.shopItems);
-      }
-      if (json.shop.buyMarkup !== undefined) {
-        setBuyMarkup(json.shop.buyMarkup);
-      }
-      if (json.shop.sellMarkup !== undefined) {
-        setSellMarkup(json.shop.sellMarkup);
-      }
-    }
-
-    setCharacterImported(true);
-    toast.success('Character imported successfully!');
-  }
 
   const formatPrice = (price: { gold: number; silver: number; copper: number }) => {
     const parts = [];
@@ -282,7 +254,7 @@ function App() {
       // Add item to inventory (create new instance with unique ID)
       const newItem: ItemData = {
         ...shopItem,
-        id: `item-${Math.random()}`,
+        id: `item-${Date.now()}`,
         currentUnits: shopItem.totalUnits,
         equipped: false
       };
@@ -312,21 +284,6 @@ function App() {
     toast.success(`Sold ${item.name}!`, {
       description: `Received ${formatPrice(sellPrice)}`
     });
-  };
-
-  const handleAddShopItem = (item: ItemData) => {
-    setShopItems([...shopItems, item]);
-    toast.success(`Added ${item.name} to shop!`);
-  };
-
-  const handleUpdateShopItem = (updatedItem: ItemData) => {
-    setShopItems(shopItems.map(item => item.id === updatedItem.id ? updatedItem : item));
-    toast.success(`Updated ${updatedItem.name}!`);
-  };
-
-  const handleRemoveShopItem = (id: string) => {
-    setShopItems(shopItems.filter(item => item.id !== id));
-    toast.success('Removed item from shop');
   };
 
   const handlers = useSwipeable({
@@ -485,12 +442,12 @@ function App() {
               onClose={() => setShowShop(false)}
               onBuyItem={handleBuyItem}
               onSellItem={handleSellItem}
-              onAddShopItem={handleAddShopItem}
-              onUpdateShopItem={handleUpdateShopItem}
-              onRemoveShopItem={handleRemoveShopItem}
+              onAddShopItem={addShopItem}
+              onUpdateShopItem={(item) => updateShopItem(item.id, item)}
+              onRemoveShopItem={removeShopItem}
               playerCoins={coins}
               inventoryItems={inventory}
-              shopItems={shopItems}
+              shopItems={shop.items}
               buyMarkup={buyMarkup}
               sellMarkup={sellMarkup}
               onBuyMarkupChange={setBuyMarkup}

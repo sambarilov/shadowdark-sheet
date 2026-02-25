@@ -30,7 +30,7 @@ export function DiceRollerDrawer({ open, onOpenChange, onShowResult }: DiceRolle
 
   const addDie = (sides: number) => {
     const newDie: DiceInPool = {
-      id: `${Date.now()}-${Math.random()}`,
+      id: `die-${Date.now()}-${Math.random()}`,
       sides
     };
     setDicePool([...dicePool, newDie]);
