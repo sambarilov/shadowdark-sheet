@@ -13,7 +13,7 @@ export function formatModifier(mod: number): string {
 
 export function calculateAC(inventory: ItemData[], acBonus: number, dexBonus: number): number {
   let ac = 10;
-  
+
   // Best equipped armor AC
   const bestArmor = inventory.filter(
     (item: ItemData) => item.type === 'armor' && item.equipped && item.armorAC !== undefined
@@ -25,7 +25,7 @@ export function calculateAC(inventory: ItemData[], acBonus: number, dexBonus: nu
   }
 
   ac += !bestArmor || (bestArmor.slots || 0 <= 2) ? dexBonus : 0;
-  
+
   // Add best equipped shield bonus
   const equippedShields = inventory.filter(
     (item: ItemData) => item.type === 'shield' && item.equipped
@@ -35,10 +35,10 @@ export function calculateAC(inventory: ItemData[], acBonus: number, dexBonus: nu
     const highestShieldBonus = Math.max(...equippedShields.map((item: ItemData) => item.shieldACBonus || 0));
     ac += highestShieldBonus;
   }
-  
+
   // Add AC bonus
   ac += acBonus;
-  
+
   return ac;
 };
 
@@ -48,7 +48,7 @@ export function useItem(inventory: ItemData[], id: string): ItemData[] {
       const newCurrentUnits = (item.currentUnits || 0) - 1;
 
       if (newCurrentUnits <= 0) return null;
-      
+
       return {
         ...item,
         currentUnits: newCurrentUnits
@@ -57,5 +57,5 @@ export function useItem(inventory: ItemData[], id: string): ItemData[] {
 
     return item;
   })
-  .filter((item): item is ItemData => item !== null);
+    .filter((item): item is ItemData => item !== null);
 }

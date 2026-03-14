@@ -13,7 +13,7 @@ import { ExportDialog } from './components/dialogs/ExportDialog';
 import { useGame } from './context/GameContext';
 import type { Spell } from './types';
 import { calculateAC, abilityModifier } from './characterUtils';
-
+import { formatPrice } from './shopUtils'
 
 function App() {
   const [currentView, setCurrentView] = useState<'attributes' | 'player' | 'inventory'>('attributes');
@@ -29,16 +29,14 @@ function App() {
   const [exportJsonText, setExportJsonText] = useState('');
   const [characterImported, setCharacterImported] = useState(false);
   const [weaponBonuses, setWeaponBonuses] = useState<Record<string, number>>({});
-  const [buyMarkup, setBuyMarkup] = useState(0);
-  const [sellMarkup, setSellMarkup] = useState(-50);
-  
+
   const {
     state: {
-      name, 
-      ancestry, 
-      class: characterClass, 
-      level, 
-      background, 
+      name,
+      ancestry,
+      class: characterClass,
+      level,
+      background,
       alignment,
       currentXP,
       xpToNextLevel,
@@ -89,14 +87,14 @@ function App() {
     try {
       // Get character name
       const characterName = name
-      
+
       // Build stats object
       const stats: Record<string, number> = {};
       Object.keys(abilities).forEach(key => {
         const ability = abilities[key as keyof typeof abilities];
         stats[ability.shortName] = ability.score;
       });
-      
+
       // Build gear array from inventory
       const gear = inventory.map(item => ({
         instanceId: item.id,
@@ -116,15 +114,15 @@ function App() {
         totalUnits: item.totalUnits || undefined,
         currentUnits: item.currentUnits || undefined,
       }));
-      
+
       // Build spellsKnown string
       const spellsKnown = spells.map(s => s.name).join(', ');
-      
+
       // Calculate gear slots
       const strScore = abilities.str.score || 10;
       const gearSlotsTotal = Math.max(strScore, 10);
       const gearSlotsUsed = inventory.reduce((sum, item) => sum + (item.slots || 0), 0);
-      
+
       // Build the export object
       const exportData = {
         name: characterName,
@@ -164,12 +162,11 @@ function App() {
         gold: coins.gold,
         silver: coins.silver,
         copper: coins.copper,
-        weaponBonuses,
         notes,
         shop,
         version: '2'
       };
-      
+
       // Create JSON and show export dialog
       const jsonString = JSON.stringify(exportData, null, 2);
       setExportJsonText(jsonString);
@@ -213,7 +210,7 @@ function App() {
       toast.error('Please paste JSON content');
       return;
     }
-    
+
     try {
       const parsedJson = JSON.parse(json);
       importCharacter(parsedJson);
@@ -222,14 +219,6 @@ function App() {
     } catch (error) {
       toast.error('Invalid JSON format');
     }
-  };
-
-  const formatPrice = (price: { gold: number; silver: number; copper: number }) => {
-    const parts = [];
-    if (price.gold > 0) parts.push(`${price.gold}g`);
-    if (price.silver > 0) parts.push(`${price.silver}s`);
-    if (price.copper > 0) parts.push(`${price.copper}c`);
-    return parts.join(' ');
   };
 
   const handleBuyItem = (shopItem: ItemData) => {
@@ -280,7 +269,7 @@ function App() {
 
     // Remove from inventory
     removeItem(item.id);
-    
+
     toast.success(`Sold ${item.name}!`, {
       description: `Received ${formatPrice(sellPrice)}`
     });
@@ -310,7 +299,7 @@ function App() {
       {/* Mobile Container for small screens, full-width for large screens */}
       <div className="w-full max-w-md lg:max-w-none lg:w-full h-[100vh] border-8 border-black bg-white shadow-2xl flex flex-col relative overflow-hidden">
         {/* Character Sheet Background Watermark */}
-        <div 
+        <div
           className="absolute inset-0 opacity-5 bg-cover bg-center pointer-events-none"
         />
 
@@ -320,25 +309,22 @@ function App() {
             <div className="flex border-b-2 border-black relative z-10 lg:hidden">
               <button
                 onClick={() => setCurrentView('attributes')}
-                className={`flex-1 py-3 text-sm font-black uppercase ${
-                  currentView === 'attributes' ? 'bg-black text-white' : 'bg-white'
-                }`}
+                className={`flex-1 py-3 text-sm font-black uppercase ${currentView === 'attributes' ? 'bg-black text-white' : 'bg-white'
+                  }`}
               >
                 Attributes
               </button>
               <button
                 onClick={() => setCurrentView('player')}
-                className={`flex-1 py-3 text-sm font-black uppercase ${
-                  currentView === 'player' ? 'bg-black text-white' : 'bg-white'
-                }`}
+                className={`flex-1 py-3 text-sm font-black uppercase ${currentView === 'player' ? 'bg-black text-white' : 'bg-white'
+                  }`}
               >
                 Combat
               </button>
               <button
                 onClick={() => setCurrentView('inventory')}
-                className={`flex-1 py-3 text-sm font-black uppercase ${
-                  currentView === 'inventory' ? 'bg-black text-white' : 'bg-white'
-                }`}
+                className={`flex-1 py-3 text-sm font-black uppercase ${currentView === 'inventory' ? 'bg-black text-white' : 'bg-white'
+                  }`}
               >
                 Inventory
               </button>
@@ -352,8 +338,8 @@ function App() {
                 style={{
                   transform: window.innerWidth >= 1024 ? 'translateX(0)' :
                     currentView === 'attributes' ? 'translateX(0)' :
-                    currentView === 'player' ? 'translateX(-100%)' :
-                    'translateX(-200%)'
+                      currentView === 'player' ? 'translateX(-100%)' :
+                        'translateX(-200%)'
                 }}
               >
                 {/* Character Attributes View */}
@@ -448,10 +434,10 @@ function App() {
               playerCoins={coins}
               inventoryItems={inventory}
               shopItems={shop.items}
-              buyMarkup={buyMarkup}
-              sellMarkup={sellMarkup}
-              onBuyMarkupChange={setBuyMarkup}
-              onSellMarkupChange={setSellMarkup}
+              buyMarkup={shop.buyMarkup}
+              sellMarkup={shop.sellMarkup}
+              onBuyMarkupChange={updateBuyMarkup}
+              onSellMarkupChange={updateSellMarkup}
             />
           </div>
         )}
@@ -468,37 +454,37 @@ function App() {
             aria-label="Open Dice Roller"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
-              <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/>
-              <path d="M6 18h.01"/>
-              <path d="M10 14h.01"/>
-              <path d="M15 6h.01"/>
-              <path d="M18 9h.01"/>
+              <rect width="12" height="12" x="2" y="10" rx="2" ry="2" />
+              <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6" />
+              <path d="M6 18h.01" />
+              <path d="M10 14h.01" />
+              <path d="M15 6h.01" />
+              <path d="M18 9h.01" />
             </svg>
           </button>
         )}
 
         {/* Dice Roller Drawer */}
-        <DiceRollerDrawer 
-          open={showDiceRoller} 
+        <DiceRollerDrawer
+          open={showDiceRoller}
           onOpenChange={setShowDiceRoller}
           onShowResult={setDiceRollResult}
         />
 
         {/* Dice Roll Result Floating Message */}
         {diceRollResult && (
-          <div 
+          <div
             onClick={() => setDiceRollResult(null)}
             className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
           >
             <div className="border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md pointer-events-auto">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2">
-                <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
-                <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/>
-                <path d="M6 18h.01"/>
-                <path d="M10 14h.01"/>
-                <path d="M15 6h.01"/>
-                <path d="M18 9h.01"/>
+                <rect width="12" height="12" x="2" y="10" rx="2" ry="2" />
+                <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6" />
+                <path d="M6 18h.01" />
+                <path d="M10 14h.01" />
+                <path d="M15 6h.01" />
+                <path d="M18 9h.01" />
               </svg>
               {diceRollResult}
             </div>
@@ -513,12 +499,12 @@ function App() {
           >
             <div className="border-4 border-black bg-black text-white p-6 text-center animate-in fade-in cursor-pointer shadow-2xl max-w-md pointer-events-auto">
               <svg className="inline-block mr-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
-                <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/>
-                <path d="M6 18h.01"/>
-                <path d="M10 14h.01"/>
-                <path d="M15 6h.01"/>
-                <path d="M18 9h.01"/>
+                <rect width="12" height="12" x="2" y="10" rx="2" ry="2" />
+                <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6" />
+                <path d="M6 18h.01" />
+                <path d="M10 14h.01" />
+                <path d="M15 6h.01" />
+                <path d="M18 9h.01" />
               </svg>
               {playerRollResult}
             </div>
